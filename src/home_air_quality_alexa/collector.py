@@ -233,6 +233,7 @@ async def amazon_command(args: argparse.Namespace) -> int:
                 if not args.once:
                     task = await api.start_http2_processing(http2, on_reauth_required=reauth_needed)
                 delay = args.interval
+                snapshot_ready = True
                 while not stop.is_set():
                     if reauth.is_set():
                         LOG.error("Amazon session requires reauthentication: run login again")
@@ -242,6 +243,24 @@ async def amazon_command(args: argparse.Namespace) -> int:
                         LOG.error("Alexa HTTP2 stream stopped; refusing to store potentially stale data")
                         record_event(db, "push_stream_stopped")
                         return 4
+                    if not snapshot_ready:
+                        # Do not persist an old snapshot after a failed refresh.
+                        try:
+                            await api.login.login_mode_stored_data()
+                            devices = await api.get_devices_data()
+                            snapshot_ready = True
+                        except CannotAuthenticate:
+                            record_event(db, "auth_required")
+                            LOG.error("Amazon session expired; run login again")
+                            return 3
+                        except Exception as error:
+                            LOG.error("Retry refresh failed (%s)", type(error).__name__)
+                            record_event(db, "poll_failed", error_type=type(error).__name__)
+                            try:
+                                await asyncio.wait_for(stop.wait(), timeout=min(delay, 60))
+                            except TimeoutError:
+                                pass
+                            continue
                     try:
                         # First iteration can reuse the initial snapshot.
                         batch = list(selected_devices(devices, api.sensors, args.device))
@@ -272,6 +291,7 @@ async def amazon_command(args: argparse.Namespace) -> int:
                         try:
                             await api.login.login_mode_stored_data()
                             devices = await api.get_devices_data()
+                            snapshot_ready = True
                             # Access only the public login return object for persistence.
                             if login_state != stored:
                                 save_private_json(session_file, login_state)
@@ -283,7 +303,11 @@ async def amazon_command(args: argparse.Namespace) -> int:
                         except Exception as error:
                             LOG.error("Poll failed (%s)", type(error).__name__)
                             record_event(db, "poll_failed", error_type=type(error).__name__)
-                            await asyncio.sleep(min(delay, 60))
+                            snapshot_ready = False
+                            try:
+                                await asyncio.wait_for(stop.wait(), timeout=min(delay, 60))
+                            except TimeoutError:
+                                pass
                 return 0
             finally:
                 db.close()
