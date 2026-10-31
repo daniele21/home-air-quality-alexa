@@ -179,6 +179,7 @@ async def amazon_command(args: argparse.Namespace) -> int:
 
     session_file = args.session_file.expanduser()
     stored = load_private_json(session_file)
+    last_saved_login = json.dumps(stored, sort_keys=True) if stored else ""
     if args.command != "login" and not stored:
         LOG.error("Missing login session: first run 'air-quality-alexa login --email YOUR_EMAIL'")
         return 2
@@ -292,10 +293,11 @@ async def amazon_command(args: argparse.Namespace) -> int:
                             await api.login.login_mode_stored_data()
                             devices = await api.get_devices_data()
                             snapshot_ready = True
-                            # Access only the public login return object for persistence.
-                            if login_state != stored:
+                            # Persist token rotations even if the library mutated the original dict.
+                            updated = json.dumps(login_state, sort_keys=True)
+                            if updated != last_saved_login:
                                 save_private_json(session_file, login_state)
-                                stored = json.loads(json.dumps(login_state))
+                                last_saved_login = updated
                         except CannotAuthenticate:
                             record_event(db, "auth_required")
                             LOG.error("Amazon session expired; run login again")
