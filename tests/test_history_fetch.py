@@ -1,5 +1,7 @@
 """Offline tests for Alexa historical backfill (no Amazon credentials or I/O)."""
+import asyncio
 from datetime import datetime, timedelta, timezone
+from unittest.mock import AsyncMock, patch
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from types import SimpleNamespace
@@ -11,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from home_air_quality_alexa.history_fetch import (
     QUERY, RESOLUTIONS, HistoryFetchError, build_request,
     choose_device_sensor, history_period, parse_history, store_history,
+    run_history_fetch, safe_identifier,
 )
 
 
@@ -118,6 +121,66 @@ class HistoryTests(unittest.TestCase):
             self.assertEqual(conn.execute("SELECT count(*) FROM readings").fetchone()[0],0)
             self.assertEqual(conn.execute("SELECT numeric_value FROM historical_readings").fetchone()[0],12.4)
             conn.close()
+
+
+
+
+class IdentityValidationTests(unittest.TestCase):
+    def test_safe_identifier_avoids_raw_secret_like_values(self):
+        self.assertEqual(safe_identifier("range"), "range")
+        self.assertEqual(safe_identifier("Alexa.RangeController"), "Alexa.RangeController")
+        self.assertEqual(safe_identifier("6"), "6")
+        self.assertIsNone(safe_identifier(None))
+        self.assertEqual(safe_identifier("Bearer TOKEN=secret"), "<unrecognized>")
+        self.assertEqual(safe_identifier("a" * 81), "<unrecognized>")
+
+    def test_mismatch_returns_safe_metadata_without_writing_readings(self):
+        api = SimpleNamespace(sensors={"ABC": {"PM25": sensor()}})
+        arguments = SimpleNamespace(device=None, sensor="PM25", days=1, resolution="ONE_HOUR")
+        date = datetime.now(timezone.utc) - timedelta(hours=1)
+        rows = [{
+            "endpointIds": ["AAA_ENDPOINT"],
+            "timestamp": date.isoformat(),
+            "value": 12.4,
+        }]
+        payload = response(rows, instance=None, interface="Alexa.AirQuality.ParticulateMatter")
+        with sqlite3.connect(":memory:") as db:
+            with patch("home_air_quality_alexa.history_fetch.fetch_history",
+                       new_callable=AsyncMock, return_value=payload):
+                result = asyncio.run(run_history_fetch(api, {"ABC": monitor()}, arguments, db))
+            self.assertEqual(result["status"], "identity_mismatch")
+            self.assertEqual(result["requested"], {"interface": "range", "instance": "6"})
+            self.assertEqual(
+                result["returned"],
+                {"interface": "Alexa.AirQuality.ParticulateMatter", "instance": None},
+            )
+            self.assertEqual(result["points_reported"], 1)
+            self.assertEqual(result["points_for_selected_endpoint"], 1)
+            self.assertEqual(result["new_saved"], 0)
+            self.assertNotIn("AAA_ENDPOINT", str(result))
+            self.assertNotIn("12.4", str(result))
+            self.assertEqual(db.execute(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' "
+                "AND name='historical_readings'"
+            ).fetchone()[0], 0)
+
+    def test_matching_identity_saves_history(self):
+        api = SimpleNamespace(sensors={"ABC": {"PM25": sensor()}})
+        arguments = SimpleNamespace(device=None, sensor="PM25", days=1, resolution="ONE_HOUR")
+        date = datetime.now(timezone.utc) - timedelta(hours=1)
+        payload = response([{
+            "endpointIds": ["AAA_ENDPOINT"],
+            "timestamp": date.isoformat(),
+            "value": 12.4,
+        }])
+        with sqlite3.connect(":memory:") as db:
+            with patch("home_air_quality_alexa.history_fetch.fetch_history",
+                       new_callable=AsyncMock, return_value=payload):
+                result = asyncio.run(run_history_fetch(api, {"ABC": monitor()}, arguments, db))
+            self.assertEqual(result["status"], "ok")
+            self.assertEqual(result["new_saved"], 1)
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM historical_readings")
+                             .fetchone()[0], 1)
 
 
 if __name__ == "__main__":
