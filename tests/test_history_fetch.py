@@ -147,6 +147,69 @@ class HistoryTests(unittest.TestCase):
         self.assertEqual(meta["points_reported"], len(rows))
         self.assertEqual(meta["average_value"], 13.5)
 
+    def test_one_day_inclusive_last_midnight_is_excluded(self):
+        start = datetime(2026, 10, 30, tzinfo=timezone.utc)
+        end = start + timedelta(days=1)
+        rows = [
+            {
+                "endpointIds": ["AAA_ENDPOINT"],
+                "timestamp": (start + timedelta(hours=i)).isoformat(),
+                "value": float(i),
+            }
+            for i in range(25)
+        ]
+        meta, accepted = parse_history(
+            response(rows, interface="Alexa.RangeController"),
+            endpoint_id="AAA_ENDPOINT", start=start, end=end,
+            resolution="ONE_HOUR",
+        )
+        self.assertEqual(meta["points_reported"], 25)
+        self.assertEqual(meta["valid_points"], 24)
+        self.assertEqual(meta["outside_window_buckets"], 1)
+        self.assertEqual(meta["missing_buckets"], 0)
+        self.assertEqual(meta["invalid_buckets"], 0)
+        self.assertEqual(len(accepted), 24)
+        self.assertEqual(accepted[0][0], start.isoformat(timespec="microseconds"))
+        self.assertEqual(accepted[-1][0],
+                         (end - timedelta(hours=1)).isoformat(timespec="microseconds"))
+
+    def test_back_to_back_days_have_no_shared_boundary_timestamp(self):
+        start = datetime(2026, 10, 29, tzinfo=timezone.utc)
+        buckets = set()
+        for delta in range(2):
+            begin = start + timedelta(days=delta)
+            end = begin + timedelta(days=1)
+            rows = [
+                {
+                    "endpointIds": ["AAA_ENDPOINT"],
+                    "timestamp": (begin + timedelta(hours=i)).isoformat(),
+                    "value": float(i),
+                }
+                for i in range(25)
+            ]
+            meta, points = parse_history(
+                response(rows), endpoint_id="AAA_ENDPOINT",
+                start=begin, end=end, resolution="ONE_HOUR")
+            self.assertEqual(meta["outside_window_buckets"], 1)
+            for timestamp, _, _ in points:
+                self.assertNotIn(timestamp, buckets)
+                buckets.add(timestamp)
+        self.assertEqual(len(buckets), 48)
+
+    def test_excluded_missing_endpoint_is_not_counted_as_missing(self):
+        start = datetime(2026, 10, 30, tzinfo=timezone.utc)
+        end = start + timedelta(days=1)
+        rows = [
+            {"endpointIds": ["AAA_ENDPOINT"], "timestamp": start.isoformat(), "value": 2},
+            {"endpointIds": [], "timestamp": end.isoformat(), "value": 0},
+        ]
+        meta, _ = parse_history(
+            response(rows), endpoint_id="AAA_ENDPOINT",
+            start=start, end=end, resolution="ONE_HOUR")
+        self.assertEqual(meta["missing_buckets"], 0)
+        self.assertEqual(meta["outside_window_buckets"], 1)
+        self.assertEqual(meta["valid_points"], 1)
+
     def test_graphql_errors_fail_closed(self):
         payload = response([])
         payload["errors"] = [{"message":"AUTH COOKIE SECRET"}]
@@ -228,7 +291,11 @@ class IdentityValidationTests(unittest.TestCase):
             }
             for i in range(168)
         ]
-        rows.append({"endpointIds": [], "timestamp": now.isoformat(), "value": 0.0})
+        rows.append({
+            "endpointIds": [],
+            "timestamp": (start_bucket + timedelta(minutes=30)).isoformat(),
+            "value": 0.0,
+        })
         payload = response(
             rows, interface="Alexa.RangeController", instance="6"
         )
@@ -283,7 +350,8 @@ class IdentityValidationTests(unittest.TestCase):
                 )
             self.assertEqual(result["status"], "no_data")
             self.assertEqual(result["points_reported"], 721)
-            self.assertEqual(result["missing_buckets"], 721)
+            self.assertEqual(result["missing_buckets"], 720)
+            self.assertEqual(result["outside_window_buckets"], 1)
             self.assertEqual(result["valid_points"], 0)
             self.assertEqual(result["new_saved"], 0)
             self.assertIsNone(result["average_value"])
