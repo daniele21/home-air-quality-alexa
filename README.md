@@ -194,6 +194,30 @@ no valid points. The CLI now reports `status: no_data` and
 `average_value: null` for such responses. No `historical_readings` table
 is created if there are no usable measurements.
 
+**One-day probes confirmed on 2026-11-01:** both October 30 and October 20
+return a valid historical series for PM2.5, so a strict seven-day retention
+limit is ruled out. Each one-day hourly request returned **25 timestamps**
+because Alexa includes the exclusive end timestamp at midnight. The importer
+now enforces `start <= timestamp < end`, accepts at most the **24 hourly
+buckets inside a full UTC day**, and reports the final point separately as
+`outside_window_buckets: 1`. It does not treat that extra boundary as a
+missing sample or an invalid measurement. `window_average_value` is computed
+from accepted in-window values; `average_value` is Alexa's own value, which
+may use different endpoint inclusion rules.
+
+**Next retention test:** request one day in September before attempting a
+multi-day backfill:
+
+```bash
+.venv/bin/air-quality-alexa history-fetch --sensor PM25 \\
+  --resolution ONE_HOUR --start 2026-09-30 --end 2026-10-01 \\
+  --probe-only
+```
+
+If this returns no data, compare one intermediate day in October (for example
+October 10) to narrow a possible retention boundary, without concluding that
+Amazon always keeps exactly a fixed number of days.
+
 To distinguish a history retention limit from requests that span too much
 time, use **one-day, read-only probes** (one GraphQL request each), without
 altering your existing SQLite database:
