@@ -10,7 +10,7 @@ are never overwritten.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from http import HTTPMethod
 import math
 import sqlite3
@@ -89,13 +89,55 @@ def safe_identifier(value: Any) -> str | None:
     return value
 
 
-def history_period(days: int, *, now: datetime | None = None) -> tuple[datetime, datetime]:
+def history_period(
+    days: int,
+    *,
+    now: datetime | None = None,
+    resolution: str = "ONE_HOUR",
+    start_date: str | None = None,
+    end_date: str | None = None,
+) -> tuple[datetime, datetime]:
+    """Use reproducible, UTC-aligned aggregation windows.
+
+    Historical results are aggregated relative to the requested start time.
+    A rolling `now` start shifted the same hourly series by minutes each
+    time, so deduplicating by timestamp alone was unreliable. Explicit
+    YYYY-MM-DD boundaries are end-exclusive and UTC.
+    """
+    if resolution not in RESOLUTIONS:
+        raise HistoryFetchError("Unsupported aggregation resolution")
+    if (start_date is None) != (end_date is None):
+        raise HistoryFetchError("Both --start and --end must be provided together")
+    if start_date is not None:
+        try:
+            if (len(start_date) != 10 or len(end_date) != 10
+                    or date.fromisoformat(start_date).isoformat() != start_date
+                    or date.fromisoformat(end_date).isoformat() != end_date):
+                raise ValueError("Expected canonical ISO dates")
+            start = datetime.combine(date.fromisoformat(start_date),
+                                     datetime.min.time(), tzinfo=timezone.utc)
+            end = datetime.combine(date.fromisoformat(end_date),
+                                   datetime.min.time(), tzinfo=timezone.utc)
+        except (TypeError, ValueError) as exc:
+            raise HistoryFetchError("Dates must be YYYY-MM-DD (UTC)") from exc
+        duration = end - start
+        if not timedelta(0) < duration <= timedelta(days=MAX_DAYS):
+            raise HistoryFetchError("UTC date interval must be 1 to 31 days, end exclusive")
+        return start, end
+
     if isinstance(days, bool) or not isinstance(days, int) or not 1 <= days <= MAX_DAYS:
         raise HistoryFetchError("Choose between 1 and 31 days per request")
     end = now or datetime.now(timezone.utc)
     if end.tzinfo is None:
         raise HistoryFetchError("Current time must have a timezone")
     end = end.astimezone(timezone.utc)
+    if resolution == "ONE_DAY":
+        end = end.replace(hour=0, minute=0, second=0, microsecond=0)
+    elif resolution == "ONE_HOUR":
+        end = end.replace(minute=0, second=0, microsecond=0)
+    else:
+        end = end.replace(minute=(end.minute // 5) * 5,
+                          second=0, microsecond=0)
     return end - timedelta(days=days), end
 
 
@@ -313,7 +355,11 @@ async def run_history_fetch(api: Any, devices: dict[str, Any], args: Any, db: sq
     device, sensor = choose_device_sensor(
         devices, api.sensors, serial=args.device, key=args.sensor
     )
-    start, end = history_period(args.days)
+    start, end = history_period(
+        args.days, resolution=args.resolution,
+        start_date=getattr(args, "start", None),
+        end_date=getattr(args, "end", None),
+    )
     request = build_request(device, sensor, start, end, args.resolution)
     response = await fetch_history(api, request)
     meta, points = parse_history(
@@ -367,7 +413,9 @@ async def run_history_fetch(api: Any, devices: dict[str, Any], args: Any, db: sq
         "status": "ok",
         "device_name": device.account_name,
         "sensor": args.sensor,
-        "requested_days": args.days,
+        "requested_days": (end - start).days,
+        "requested_start_utc": start.isoformat(),
+        "requested_end_utc": end.isoformat(),
         "resolution": args.resolution,
         "points_reported": meta["points_reported"],
         "valid_points": meta["valid_points"],
