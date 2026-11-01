@@ -248,6 +248,16 @@ async def amazon_command(args: argparse.Namespace) -> int:
                         result = await run_history_fetch(api, devices, args, history_db)
                 print(json.dumps(result, ensure_ascii=False, indent=2))
                 return 0 if result["status"] in ("ok", "no_data") else 4
+            if args.command == "history-backfill":
+                from .history_backfill import run_backfill
+
+                if args.apply:
+                    with open_database(args.db.expanduser()) as history_db:
+                        result = await run_backfill(api, devices, args, history_db)
+                else:
+                    result = await run_backfill(api, devices, args, None)
+                print(json.dumps(result, ensure_ascii=False, indent=2))
+                return 0 if result["status"] in ("plan", "ok", "partial_limit_reached") else 4
             if args.command == "devices":
                 for device in devices.values():
                     keys = sorted(api.sensors.get(device.serial_number, {}))
@@ -377,6 +387,18 @@ def main() -> int:
     history_fetch.add_argument("--resolution", choices=("FIVE_MINS", "ONE_HOUR", "ONE_DAY"), default="ONE_HOUR")
     history_fetch.add_argument("--device", help="Monitor serial; required when multiple matching monitors exist")
     history_fetch.add_argument("--probe-only", action="store_true", help="Request one historical window and print a summary without touching SQLite")
+    backfill = sub.add_parser("history-backfill", help="Plan or run resumable, rate-limited multi-sensor history import")
+    backfill.add_argument("--start", help="UTC start YYYY-MM-DD, inclusive (default: last 30 completed UTC days)")
+    backfill.add_argument("--end", help="UTC end YYYY-MM-DD, exclusive (default: current UTC midnight)")
+    backfill.add_argument("--days", type=int, default=30, help="Days of history when --start/--end omitted (default 30)")
+    backfill.add_argument("--sensor", action="append", choices=("PM25", "PM10", "VOC", "CO", "Humidity", "Air Quality"), help="Select one sensor; repeat to select more (default: all six)")
+    backfill.add_argument("--device", help="Monitor serial; required for multiple monitors")
+    backfill.add_argument("--resolution", choices=("ONE_HOUR", "FIVE_MINS", "ONE_DAY"), default="ONE_HOUR")
+    backfill.add_argument("--chunk-days", type=int, default=1, help="UTC days per query, 1..7 (default 1)")
+    backfill.add_argument("--delay", type=float, default=5.0, help="Seconds between private API requests, 3..120")
+    backfill.add_argument("--max-requests", type=int, default=30, help="Maximum calls this run (default 30); resume to continue")
+    backfill.add_argument("--apply", action="store_true", help="Actually call the history API and update SQLite; without it, plan only")
+    backfill.add_argument("--force", action="store_true", help="Requery even successfully completed windows (only with --apply)")
     collector = sub.add_parser("collect", help="Collect measurements")
     collector.add_argument("--interval", type=int, default=300, help="Poll interval, at least 300s")
     collector.add_argument("--device", help="Limit to a device serial shown by 'devices'")
