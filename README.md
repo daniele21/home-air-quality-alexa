@@ -83,6 +83,29 @@ git pull
 .venv/bin/air-quality-alexa history-probe
 ```
 
+**Confirmed on 2026-11-01 (real device/account):** `history-probe` successfully
+read the Amazon Nexus GraphQL schema (54 root fields). It discovered:
+`airQualityHistory` and `getPropertySceneHistoricalDataUrl`. This is
+**real metadata evidence**, not yet proof of reading historical values.
+
+The next experimental step is to inspect the signatures and output types:
+
+```bash
+git switch research/alexa-history-probe
+git pull
+.venv/bin/python -m pip install -e .
+.venv/bin/air-quality-alexa history-inspect
+```
+
+`history-inspect` performs at most two additional read-only GraphQL metadata
+requests, printing only argument names/types and return-type field names/types
+for the two known operations. It does **not** call the history operations,
+download measurements, expose session secrets or write to SQLite.
+
+Please share only the printed JSON (after reviewing it for any identifiers).
+The next code change will use the **actual argument signatures**, not guessed
+parameters, to request a small time range for the known monitor.
+
 The command uses your existing local Amazon login session and submits exactly
 **one** GraphQL introspection query to the same Nexus host used by normal device
 discovery. It outputs only candidate root query field names (no measurements,
