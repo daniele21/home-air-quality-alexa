@@ -258,6 +258,62 @@ class IdentityValidationTests(unittest.TestCase):
                 "µg/m³",
             )
 
+    def test_september_all_missing_is_no_data_not_zero_pm25(self):
+        api = SimpleNamespace(sensors={"ABC": {"PM25": sensor()}})
+        arguments = SimpleNamespace(
+            device=None, sensor="PM25", days=7, resolution="ONE_HOUR",
+            start="2026-09-01", end="2026-10-01", probe_only=False,
+        )
+        rows = [
+            {
+                "endpointIds": [],
+                "timestamp": (datetime(2026, 9, 1, tzinfo=timezone.utc)
+                              + timedelta(hours=i)).isoformat(),
+                "value": 0.0,
+            }
+            for i in range(721)
+        ]
+        payload = response(rows, interface="Alexa.RangeController", instance="6")
+        payload["data"]["airQualityHistory"]["averageValue"] = 0.0
+        with sqlite3.connect(":memory:") as db:
+            with patch("home_air_quality_alexa.history_fetch.fetch_history",
+                       new_callable=AsyncMock, return_value=payload):
+                result = asyncio.run(
+                    run_history_fetch(api, {"ABC": monitor()}, arguments, db)
+                )
+            self.assertEqual(result["status"], "no_data")
+            self.assertEqual(result["points_reported"], 721)
+            self.assertEqual(result["missing_buckets"], 721)
+            self.assertEqual(result["valid_points"], 0)
+            self.assertEqual(result["new_saved"], 0)
+            self.assertIsNone(result["average_value"])
+            self.assertIsNone(result["oldest_bucket"])
+            self.assertEqual(db.execute(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' "
+                "AND name='historical_readings'"
+            ).fetchone()[0], 0)
+
+    def test_probe_only_reports_available_without_sqlite(self):
+        api = SimpleNamespace(sensors={"ABC": {"PM25": sensor()}})
+        arguments = SimpleNamespace(
+            device=None, sensor="PM25", days=7, resolution="ONE_HOUR",
+            start="2026-10-30", end="2026-10-31", probe_only=True,
+        )
+        payload = response([
+            {"endpointIds": ["AAA_ENDPOINT"], "timestamp": "2026-10-30T08:00:00+00:00", "value": 8.5},
+            {"endpointIds": ["AAA_ENDPOINT"], "timestamp": "2026-10-30T09:00:00+00:00", "value": 7.5},
+            {"endpointIds": [], "timestamp": "2026-10-30T10:00:00+00:00", "value": 0.0},
+        ], instance="6", interface="Alexa.RangeController")
+        with patch("home_air_quality_alexa.history_fetch.fetch_history",
+                   new_callable=AsyncMock, return_value=payload):
+            result = asyncio.run(run_history_fetch(api, {"ABC": monitor()}, arguments, None))
+        self.assertEqual(result["status"], "ok")
+        self.assertTrue(result["probe_only"])
+        self.assertEqual(result["valid_points"], 2)
+        self.assertEqual(result["would_save"], 2)
+        self.assertEqual(result["new_saved"], 0)
+        self.assertEqual(result["average_value"], 13.5)
+
     def test_alias_does_not_allow_mismatched_instance_or_wrong_sensor(self):
         for key, instance in AQM_RANGE_INSTANCES.items():
             current = SimpleNamespace(feature_name="range", instance=instance)
