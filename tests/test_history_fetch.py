@@ -53,6 +53,54 @@ class RequestTests(unittest.TestCase):
         self.assertTrue(q["startDate"].startswith("2026-11-01"))
         self.assertIn("data {", item["query"])
 
+    def test_rolling_hourly_window_uses_stable_utc_hour_boundary(self):
+        now = datetime(2026, 11, 1, 1, 47, 17, 226000, tzinfo=timezone.utc)
+        start, end = history_period(7, now=now, resolution="ONE_HOUR")
+        self.assertEqual(start.isoformat(), "2026-10-25T01:00:00+00:00")
+        self.assertEqual(end.isoformat(), "2026-11-01T01:00:00+00:00")
+        start_again, end_again = history_period(
+            7, now=now + timedelta(minutes=5), resolution="ONE_HOUR")
+        self.assertEqual((start, end), (start_again, end_again))
+
+    def test_resolution_uses_correct_aggregation_boundary(self):
+        now = datetime(2026, 11, 1, 11, 47, 17, 226000, tzinfo=timezone.utc)
+        five_start, five_end = history_period(
+            1, now=now, resolution="FIVE_MINS")
+        day_start, day_end = history_period(
+            1, now=now, resolution="ONE_DAY")
+        self.assertEqual(five_end.isoformat(), "2026-11-01T11:45:00+00:00")
+        self.assertEqual(day_end.isoformat(), "2026-11-01T00:00:00+00:00")
+        self.assertEqual(five_end - five_start, timedelta(days=1))
+        self.assertEqual(day_end - day_start, timedelta(days=1))
+
+    def test_exact_date_ranges_are_utc_inclusive_start_exclusive_end(self):
+        start, end = history_period(
+            7, start_date="2026-09-01", end_date="2026-10-01")
+        self.assertEqual(start.isoformat(), "2026-09-01T00:00:00+00:00")
+        self.assertEqual(end.isoformat(), "2026-10-01T00:00:00+00:00")
+        self.assertEqual(end-start, timedelta(days=30))
+        start2, end2 = history_period(7, start_date="2026-10-31",
+                                       end_date="2026-11-01")
+        self.assertEqual(end2 - start2, timedelta(days=1))
+
+    def test_invalid_explicit_ranges_fail_before_network(self):
+        invalid = [
+            ("2026-09-01", None),
+            (None, "2026-10-01"),
+            ("2026-09-01", "2026-09-01"),
+            ("2026-10-02", "2026-10-01"),
+            ("2026-09-01", "2026-11-01"),
+            ("2026/09/01", "2026-09-02"),
+            ("2026-10-30T00:00:00", "2026-11-01"),
+            ("2026-02-30", "2026-03-02"),
+        ]
+        for start, end in invalid:
+            with self.subTest(start=start, end=end):
+                with self.assertRaises(HistoryFetchError):
+                    history_period(7, start_date=start, end_date=end)
+        with self.assertRaises(HistoryFetchError):
+            history_period(7, resolution="INVALID")
+
     def test_select_monitor_and_sensor_no_guessing(self):
         devices = {"A":monitor("A","endpoint1"), "B":monitor("B","endpoint2")}
         sensors = {"A":{"PM25":sensor()}, "B":{"PM25":sensor()}}
