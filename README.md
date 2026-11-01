@@ -390,8 +390,25 @@ query failed with a redacted GraphQL error, after which the batch stopped.
 The original Oct 2 PM2.5 one-day probe succeeded earlier on Nov 1 but a
 later query returned only empty endpoint buckets, consistent with a sliding
 retention limit. Do not assume all calendar days within a past month remain
-queryable. A guarded Mac-only five-channel extended backfill (Oct 3–Oct 31)
-is tested separately from the hosted offline CI.
+queryable.
+
+**Completed live backfill on 2026-11-01:** the private Mac mini runner
+executed 25 bounded GraphQL history requests, using seven-day UTC windows
+for Oct 3 through Oct 31 and five-second pauses. The five verified
+channels each now have **696 distinct aligned hourly measurements (29 days)**.
+A separate read-only Mac runner SQLite audit checked every expected UTC
+hour and reported **zero gaps, zero invalid numerical values**, while
+confirming that the legacy PM2.5 rolling-window records remain preserved.
+The five aligned series total **3,480 measurements**. No Amazon session,
+raw HTTP response, device identifier or detailed measurement logs were
+uploaded as GitHub artifacts.
+
+- [Backfill GitHub Actions run](https://github.com/daniele21/local-runner-infra/actions/runs/41352050336)
+- [Independent read-only SQLite coverage audit](https://github.com/daniele21/local-runner-infra/actions/runs/41352633678)
+
+Temperature is an independently exposed hardware sensor but was not
+part of this five-channel historical backfill: its GraphQL history
+mapping has not yet been verified.
 
 ## Tests
 
