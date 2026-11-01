@@ -40,6 +40,17 @@ class HistoryFetchError(Exception):
     """A safe human-readable error that contains no Amazon response details."""
 
 
+def safe_identifier(value: Any) -> str | None:
+    """Expose only short schema-like names, never opaque or account-like values."""
+    if value is None or value == "":
+        return None
+    if not isinstance(value, str) or len(value) > 80:
+        return "<unrecognized>"
+    if not all(char.isalnum() or char in "._:/-" for char in value):
+        return "<unrecognized>"
+    return value
+
+
 def history_period(days: int, *, now: datetime | None = None) -> tuple[datetime, datetime]:
     if isinstance(days, bool) or not isinstance(days, int) or not 1 <= days <= MAX_DAYS:
         raise HistoryFetchError("Choose between 1 and 31 days per request")
@@ -274,11 +285,35 @@ async def run_history_fetch(api: Any, devices: dict[str, Any], args: Any, db: sq
         end=end,
         resolution=args.resolution,
     )
-    # Enforce returned identity rather than recording mislabelled series.
-    if meta["interface"] != sensor.feature_name or (
-        meta["instance"] or None
-    ) != (sensor.instance or None):
-        raise HistoryFetchError("Alexa returned a different sensor interface/instance")
+    # Alexa's GraphQL history response may use a different interface/instance
+    # naming convention than the generic device features used by aioamazondevices.
+    # Do NOT assume the response belongs to PM25 merely because it was requested.
+    # Report sanitized metadata and counts, never device IDs, sample values,
+    # raw GraphQL responses, or token-bearing error messages.
+    expected_instance = getattr(sensor, "instance", None) or None
+    returned_instance = meta["instance"] or None
+    if meta["interface"] != sensor.feature_name or returned_instance != expected_instance:
+        return {
+            "status": "identity_mismatch",
+            "sensor_requested": args.sensor,
+            "requested": {
+                "interface": safe_identifier(sensor.feature_name),
+                "instance": safe_identifier(expected_instance),
+            },
+            "returned": {
+                "interface": safe_identifier(meta["interface"]),
+                "instance": safe_identifier(returned_instance),
+            },
+            "points_reported": meta["points_reported"],
+            "points_for_selected_endpoint": meta["valid_points"],
+            "missing_buckets": meta["missing_buckets"],
+            "invalid_buckets": meta["invalid_buckets"],
+            "new_saved": 0,
+            "note": (
+                "Amazon returned history data, but sensor identity is not verified. "
+                "Nothing was saved. Use these metadata fields to establish a safe mapping."
+            ),
+        }
     from .collector import SENSOR_UNITS, utc_now
     unit = getattr(sensor, "scale", None) or SENSOR_UNITS.get(args.sensor)
     count = store_history(
