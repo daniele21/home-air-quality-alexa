@@ -99,6 +99,35 @@ def plan_tasks(start: date, end: date, sensors: tuple[str, ...], *, chunk_days: 
     return out
 
 
+def safe_failure_code(exc: Exception) -> str:
+    """Describe a failure using only vetted, non-secret error classes.
+
+    Never serialize exception messages or provider response bodies to CI.
+    """
+    if not isinstance(exc, HistoryFetchError):
+        return "unexpected_exception"
+    msg = str(exc)
+    if msg == "Alexa GraphQL returned errors (details withheld for privacy)":
+        return "graphql_rejected"
+    if msg.startswith("Alexa history request failed ("):
+        return "request_failed"
+    if msg == "Alexa did not return an airQualityHistory object":
+        return "no_history_object"
+    if msg == "Alexa returned a different aggregation resolution":
+        return "resolution_mismatch"
+    if msg == "Alexa history returned no sensor interface":
+        return "missing_interface"
+    if msg == "Alexa history returned no data array":
+        return "missing_data_array"
+    if msg.startswith("No monitor exposes "):
+        return "sensor_not_discovered"
+    if msg in ("Missing Alexa sensor interface name", "Missing Alexa endpoint ID"):
+        return "missing_sensor_identity"
+    if msg == "Unexpected Alexa history response":
+        return "unexpected_response"
+    return "other_history_error"
+
+
 def ensure_backfill_schema(conn: sqlite3.Connection) -> None:
     with conn:
         conn.executescript("""
@@ -270,7 +299,7 @@ async def run_backfill(
         "valid_points_received": 0,
         "missing_buckets": 0, "invalid_buckets": 0,
         "outside_window_buckets": 0,
-        "failed_window": None, "error_class": None,
+        "failed_window": None, "error_class": None, "error_code": None,
     })
 
     for i, task in enumerate(pending[:args.max_requests]):
@@ -297,6 +326,7 @@ async def run_backfill(
             progress["status"] = "stopped_on_error"
             progress["failed_window"] = {"sensor": task.sensor, "start": task.start, "end": task.end}
             progress["error_class"] = type(exc).__name__
+            progress["error_code"] = safe_failure_code(exc)
             break
 
         progress["requests_sent"] += 1
