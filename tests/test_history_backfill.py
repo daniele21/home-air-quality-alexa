@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from home_air_quality_alexa.history_backfill import (
     HistoryTask, SENSOR_ORDER, available_sensors, completed_windows,
     ensure_backfill_schema, plan_tasks, record_window, resolve_bounds,
-    run_backfill,
+    run_backfill, safe_failure_code,
 )
 from home_air_quality_alexa.history_fetch import HistoryFetchError, store_history
 
@@ -119,6 +119,22 @@ class BackfillPlanTests(unittest.TestCase):
         fetch.assert_not_called()
         self.assertNotIn("SENSITIVE_ENDPOINT", str(out))
 
+    def test_safe_error_codes_do_not_leak_exception_text(self):
+        cases = [
+            (HistoryFetchError("Alexa GraphQL returned errors (details withheld for privacy)"), "graphql_rejected"),
+            (HistoryFetchError("Alexa history request failed (TimeoutError); response details not logged"), "request_failed"),
+            (HistoryFetchError("Alexa did not return an airQualityHistory object"), "no_history_object"),
+            (HistoryFetchError("Alexa returned a different aggregation resolution"), "resolution_mismatch"),
+            (RuntimeError("sensitive custom token"), "unexpected_exception"),
+            (HistoryFetchError("untrusted response with SECRET=blah"), "other_history_error"),
+        ]
+        for exc, expected in cases:
+            with self.subTest(expected=expected):
+                code = safe_failure_code(exc)
+                self.assertEqual(code, expected)
+                self.assertNotIn("token", code)
+                self.assertNotIn("SECRET", code)
+
     def test_enforces_rate_limit_before_apply(self):
         api, devices = api_and_devices()
         with self.assertRaises(HistoryFetchError):
@@ -190,6 +206,7 @@ class BackfillExecutionTests(unittest.TestCase):
                 out = asyncio.run(run_backfill(api, devices, run, conn))
             self.assertEqual(out["status"], "stopped_on_error")
             self.assertEqual(out["error_class"], "RuntimeError")
+            self.assertEqual(out["error_code"], "unexpected_exception")
             self.assertNotIn("secret account token", str(out))
             self.assertEqual(fetch.await_count, 1)
             self.assertEqual(
