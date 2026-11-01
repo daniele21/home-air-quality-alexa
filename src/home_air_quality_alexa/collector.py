@@ -397,7 +397,7 @@ def main() -> int:
     backfill.add_argument("--start", help="UTC start YYYY-MM-DD, inclusive (default: last 30 completed UTC days)")
     backfill.add_argument("--end", help="UTC end YYYY-MM-DD, exclusive (default: current UTC midnight)")
     backfill.add_argument("--days", type=int, default=30, help="Days of history when --start/--end omitted (default 30)")
-    backfill.add_argument("--sensor", action="append", choices=("PM25", "PM10", "VOC", "CO", "Humidity", "Air Quality"), help="Select one sensor; repeat to select more (default: all six)")
+    backfill.add_argument("--sensor", action="append", choices=("PM25", "VOC", "CO", "Humidity", "Air Quality"), help="Select one sensor; repeat to select more (default: all six)")
     backfill.add_argument("--device", help="Monitor serial; required for multiple monitors")
     backfill.add_argument("--resolution", choices=("ONE_HOUR", "FIVE_MINS", "ONE_DAY"), default="ONE_HOUR")
     backfill.add_argument("--chunk-days", type=int, default=1, help="UTC days per query, 1..7 (default 1)")
