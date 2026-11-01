@@ -35,6 +35,44 @@ RESOLUTIONS = ("FIVE_MINS", "ONE_HOUR", "ONE_DAY")
 SENSORS = ("PM25", "PM10", "VOC", "CO", "Humidity", "Air Quality", "temperature")
 MAX_DAYS = 31
 
+# aioamazondevices 17.2.3 represents the AQM sensor instances using the
+# local feature name 'range', while the Alexa GraphQL history API returned
+# 'Alexa.RangeController'. The instance numbers (4..9) identify the actual
+# sensor. Keep this mapping narrow and explicit: no fuzzy prefix matching.
+AQM_RANGE_INSTANCES = {
+    "Humidity": "4",
+    "VOC": "5",
+    "PM25": "6",
+    "PM10": "7",
+    "CO": "8",
+    "Air Quality": "9",
+}
+RANGE_HISTORY_INTERFACE = "Alexa.RangeController"
+
+
+def history_identity_matches(sensor_key: str, sensor: Any, returned_interface: Any, returned_instance: Any) -> bool:
+    """Require both the reported interface and the AQM instance to match.
+
+    The history API canonicalizes the feature 'range' to
+    'Alexa.RangeController'; only this proven alias is accepted.
+    """
+    feature = getattr(sensor, "feature_name", None)
+    instance = getattr(sensor, "instance", None) or None
+    returned_instance = returned_instance or None
+    if not isinstance(feature, str) or not isinstance(returned_interface, str):
+        return False
+    if instance != returned_instance:
+        return False
+    if returned_interface == feature:
+        # Exact matching is safe only when the sensor's own identity is
+        # internally consistent with the AQM pinned library mapping.
+        return feature != "range" or AQM_RANGE_INSTANCES.get(sensor_key) == instance
+    return (
+        feature == "range"
+        and returned_interface == RANGE_HISTORY_INTERFACE
+        and AQM_RANGE_INSTANCES.get(sensor_key) == instance
+    )
+
 
 class HistoryFetchError(Exception):
     """A safe human-readable error that contains no Amazon response details."""
@@ -292,7 +330,7 @@ async def run_history_fetch(api: Any, devices: dict[str, Any], args: Any, db: sq
     # raw GraphQL responses, or token-bearing error messages.
     expected_instance = getattr(sensor, "instance", None) or None
     returned_instance = meta["instance"] or None
-    if meta["interface"] != sensor.feature_name or returned_instance != expected_instance:
+    if not history_identity_matches(args.sensor, sensor, meta["interface"], returned_instance):
         return {
             "status": "identity_mismatch",
             "sensor_requested": args.sensor,
@@ -315,7 +353,7 @@ async def run_history_fetch(api: Any, devices: dict[str, Any], args: Any, db: sq
             ),
         }
     from .collector import SENSOR_UNITS, utc_now
-    unit = getattr(sensor, "scale", None) or SENSOR_UNITS.get(args.sensor)
+    unit = SENSOR_UNITS.get(args.sensor) or getattr(sensor, "scale", None)
     count = store_history(
         db,
         serial=device.serial_number,
@@ -336,6 +374,7 @@ async def run_history_fetch(api: Any, devices: dict[str, Any], args: Any, db: sq
         "missing_buckets": meta["missing_buckets"],
         "invalid_buckets": meta["invalid_buckets"],
         "new_saved": count,
+        "interface_verified": True,
         "average_value": meta["average_value"],
         "oldest_bucket": min((p[0] for p in points), default=None),
         "newest_bucket": max((p[0] for p in points), default=None),
