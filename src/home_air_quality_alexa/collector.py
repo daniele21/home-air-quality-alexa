@@ -184,9 +184,15 @@ async def amazon_command(args: argparse.Namespace) -> int:
         LOG.error("Missing login session: first run 'air-quality-alexa login --email YOUR_EMAIL'")
         return 2
     email = args.email or os.getenv("ALEXA_EMAIL")
-    if not email:
-        LOG.error("Provide --email or set ALEXA_EMAIL")
+    if not email and args.command in ("login", "login-browser"):
+        LOG.error("Provide --email or set ALEXA_EMAIL when starting authentication")
         return 2
+    # Stored-session API calls authenticate via the saved cookies/token, not
+    # the original login email. aioamazondevices only uses login_email for
+    # diagnostic messages in login_mode_stored_data(). Avoid making an
+    # unattended Mac runner duplicate the account email in GitHub secrets.
+    if not email:
+        email = ""
     if args.command in ("login", "login-browser") and stored:
         LOG.info("Replacing existing Amazon session")
     password = ""
