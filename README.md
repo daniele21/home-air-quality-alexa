@@ -297,7 +297,7 @@ no history — the interface/instance combination or time range might differ
 from what the Alexa app requests. The implementation deliberately avoids
 guessing alternative parameters or sending batches of speculative calls.
 
-## Resumable six-sensor historical backfill
+## Resumable five-channel historical backfill
 
 **Observed cutoff for this monitor on 2026-11-01:** October 1 returned
 `no_data`; October 2, 10, 20 and 30 each returned 24 in-window hourly
@@ -306,10 +306,14 @@ retention, but not evidence of an official Amazon policy or other
 monitor/sensor behavior.
 
 The `history-backfill` command performs a controlled, sequential import for
-the six AQM sensors (PM2.5, PM10, VOC, CO, humidity and Air Quality index).
+**five live-verified Alexa channels**: PM2.5, VOC, CO, humidity and the Air Quality index.
+PM10 is listed in the community library's feature metadata, but the real Amazon
+history GraphQL endpoint rejected PM10 on 2026-11-01, so it is intentionally
+excluded from automated backfills. The Amazon device's published particulate
+sensor is PM2.5, not a PM10 measurement.
 It defaults to the last **30 completed UTC days**, one day per request,
 with five seconds between requests. For a complete 30-day window with all
-six sensors, the plan contains **180 API requests**. No concurrent/burst
+five verified channels, the plan contains **150 API requests**. No concurrent/burst
 requests are sent. To reduce risk, the default caps each execution at
 **30 requests**, after which rerunning the same command resumes at the next
 uncompleted window.
@@ -326,12 +330,12 @@ git pull --ff-only
   --start 2026-10-02 --end 2026-11-01
 ```
 
-**2. Apply a first small batch for the six sensors, October 2-4 (18 requests):**
+**2. Apply a first small batch for the five channels, October 2-4 (15 requests):**
 
 ```bash
 .venv/bin/air-quality-alexa history-backfill \\
   --start 2026-10-02 --end 2026-10-05 \\
-  --max-requests 18 --delay 5 --apply
+  --max-requests 15 --delay 5 --apply
 ```
 
 **3. After checking the results, complete the remaining days:**
@@ -378,6 +382,16 @@ This is an import system, **not a scheduled service yet**. The
 if a batch stops or data quality deteriorates, inspect safe counters and
 stop rather than increasing request frequency. Avoid posting Amazon
 cookies, device endpoint IDs or raw HTTP logs.
+
+**Self-hosted Mac verification (2026-11-01):** a central private GitHub
+Actions job successfully imported 24 UTC-hour readings for each of PM2.5,
+VOC, CO, humidity and Air Quality score for October 30. The PM10 history
+query failed with a redacted GraphQL error, after which the batch stopped.
+The original Oct 2 PM2.5 one-day probe succeeded earlier on Nov 1 but a
+later query returned only empty endpoint buckets, consistent with a sliding
+retention limit. Do not assume all calendar days within a past month remain
+queryable. A guarded Mac-only five-channel extended backfill (Oct 3–Oct 31)
+is tested separately from the hosted offline CI.
 
 ## Tests
 
