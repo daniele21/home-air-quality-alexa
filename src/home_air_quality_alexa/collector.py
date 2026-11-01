@@ -237,6 +237,13 @@ async def amazon_command(args: argparse.Namespace) -> int:
                 print(json.dumps(result, ensure_ascii=False, indent=2))
                 return 0 if result["status"] in ("metadata_available", "partial_metadata") else 4
             devices = await api.get_devices_data()
+            if args.command == "history-fetch":
+                from .history_fetch import run_history_fetch
+
+                with open_database(args.db.expanduser()) as history_db:
+                    result = await run_history_fetch(api, devices, args, history_db)
+                print(json.dumps(result, ensure_ascii=False, indent=2))
+                return 0
             if args.command == "devices":
                 for device in devices.values():
                     keys = sorted(api.sensors.get(device.serial_number, {}))
@@ -358,6 +365,11 @@ def main() -> int:
     sub.add_parser("devices", help="List devices and reported sensors")
     sub.add_parser("history-probe", help="Read-only experimental GraphQL schema probe; does NOT download history")
     sub.add_parser("history-inspect", help="Read-only GraphQL signatures for identified history queries; does NOT download history")
+    history_fetch = sub.add_parser("history-fetch", help="Download one historical Alexa air quality series to separate SQLite table")
+    history_fetch.add_argument("--sensor", choices=("PM25", "PM10", "VOC", "CO", "Humidity", "Air Quality", "temperature"), default="PM25")
+    history_fetch.add_argument("--days", type=int, default=7, help="Historical lookback, between 1 and 31 days")
+    history_fetch.add_argument("--resolution", choices=("FIVE_MINS", "ONE_HOUR", "ONE_DAY"), default="ONE_HOUR")
+    history_fetch.add_argument("--device", help="Monitor serial; required when multiple matching monitors exist")
     collector = sub.add_parser("collect", help="Collect measurements")
     collector.add_argument("--interval", type=int, default=300, help="Poll interval, at least 300s")
     collector.add_argument("--device", help="Limit to a device serial shown by 'devices'")
@@ -381,7 +393,8 @@ def main() -> int:
         return 130
     except Exception as error:
         from .device_auth import DeviceAuthorizationError
-        if isinstance(error, DeviceAuthorizationError):
+        from .history_fetch import HistoryFetchError
+        if isinstance(error, (DeviceAuthorizationError, HistoryFetchError)):
             LOG.error("%s", error)
             return 3
         LOG.error("Command failed (%s); see README troubleshooting", type(error).__name__)
