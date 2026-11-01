@@ -240,10 +240,14 @@ async def amazon_command(args: argparse.Namespace) -> int:
             if args.command == "history-fetch":
                 from .history_fetch import run_history_fetch
 
-                with open_database(args.db.expanduser()) as history_db:
-                    result = await run_history_fetch(api, devices, args, history_db)
+                if args.probe_only:
+                    # No database is opened or modified in probe mode.
+                    result = await run_history_fetch(api, devices, args, None)
+                else:
+                    with open_database(args.db.expanduser()) as history_db:
+                        result = await run_history_fetch(api, devices, args, history_db)
                 print(json.dumps(result, ensure_ascii=False, indent=2))
-                return 0 if result["status"] == "ok" else 4
+                return 0 if result["status"] in ("ok", "no_data") else 4
             if args.command == "devices":
                 for device in devices.values():
                     keys = sorted(api.sensors.get(device.serial_number, {}))
@@ -372,6 +376,7 @@ def main() -> int:
     history_fetch.add_argument("--end", help="UTC end date YYYY-MM-DD, exclusive; requires --start")
     history_fetch.add_argument("--resolution", choices=("FIVE_MINS", "ONE_HOUR", "ONE_DAY"), default="ONE_HOUR")
     history_fetch.add_argument("--device", help="Monitor serial; required when multiple matching monitors exist")
+    history_fetch.add_argument("--probe-only", action="store_true", help="Request one historical window and print a summary without touching SQLite")
     collector = sub.add_parser("collect", help="Collect measurements")
     collector.add_argument("--interval", type=int, default=300, help="Poll interval, at least 300s")
     collector.add_argument("--device", help="Limit to a device serial shown by 'devices'")
