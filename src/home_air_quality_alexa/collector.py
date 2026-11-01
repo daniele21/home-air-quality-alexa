@@ -230,6 +230,12 @@ async def amazon_command(args: argparse.Namespace) -> int:
                 result = await probe_history_schema(api)
                 print(json.dumps(result, ensure_ascii=False, indent=2))
                 return 0 if result["status"] == "metadata_available" else 4
+            if args.command == "history-inspect":
+                from .history_inspect import inspect_history_queries
+
+                result = await inspect_history_queries(api)
+                print(json.dumps(result, ensure_ascii=False, indent=2))
+                return 0 if result["status"] in ("metadata_available", "partial_metadata") else 4
             devices = await api.get_devices_data()
             if args.command == "devices":
                 for device in devices.values():
@@ -351,6 +357,7 @@ def main() -> int:
     browser_login.add_argument("--marketplace", choices=("it", "de", "fr", "es", "uk", "us"), default="it")
     sub.add_parser("devices", help="List devices and reported sensors")
     sub.add_parser("history-probe", help="Read-only experimental GraphQL schema probe; does NOT download history")
+    sub.add_parser("history-inspect", help="Read-only GraphQL signatures for identified history queries; does NOT download history")
     collector = sub.add_parser("collect", help="Collect measurements")
     collector.add_argument("--interval", type=int, default=300, help="Poll interval, at least 300s")
     collector.add_argument("--device", help="Limit to a device serial shown by 'devices'")
