@@ -137,9 +137,9 @@ on **2026-11-01**. The full input/response schema is also published publicly:
 - [alexactl schema](https://github.com/Fishwaldo/alexactl/blob/main/internal/alexagraphql/schema/schema.graphql)
 - [go-alexa schema](https://github.com/portpowered/go-alexa/blob/main/pkg/schemas/graphql/snapshots/live-schema.graphql)
 
-The private `airQualityHistory` API is **not** yet verified for returning usable
-measurements with this Amazon account. To test it against your already paired
-Amazon Air Quality Monitor, run:
+The private `airQualityHistory` API has now returned a real seven-day hourly
+PM2.5 series for the linked monitor; importing it with the validated
+interface mapping still needs a fresh run on your Mac. Run:
 
 ```bash
 cd ~/Projects/home-air-quality-alexa
@@ -177,14 +177,23 @@ sqlite3 ~/.local/share/home-air-quality-alexa/readings.sqlite3 \\
 If Amazon rejects the request, the CLI prints a safe error category; response
 bodies, authentication tokens, and endpoint identifiers are not printed.
 
-**If you get `status: identity_mismatch`:** Amazon responded with historical
-data, but the interface or instance in the response does not match the
-`aioamazondevices` current sensor metadata. The command now prints only safe
-`requested` and `returned` interface/instance names, response point counts,
-and `new_saved: 0`. Nothing is persisted until we verify the mapping.
-Share that JSON (not any raw response, account file or cookies) to finish the
-mapping. A name mismatch is not proof the data are for a different physical
-sensor; it can be a difference in Alexa's two naming conventions.
+**Verified interface mapping (live PM2.5 test on 2026-11-01):** Alexa returned
+`interfaceName: "Alexa.RangeController"`, `instance: "6"`, while
+`aioamazondevices==17.2.3` represents that same sensor using feature `range`,
+instance `6`. The library's pinned AQM sensor mapping identifies PM2.5 as
+range instance `6` (humidity=4, VOC=5, PM2.5=6, PM10=7, CO=8, air quality=9).
+The importer now recognizes **only** this explicit, grounded interface alias
+when both the exact sensor instance **and the requested device endpoint**
+match. Other interface aliases or a mismatched instance are refused. The
+initial real response contained 169 hourly rows: 168 valid values for the
+monitor and one empty-endpoint gap. The updated mapping is exercised by
+168-point offline regression tests, but the actual import requires rerunning
+`history-fetch` on the Mac.
+
+**If you get `status: identity_mismatch`:** the returned interface/instance
+still does not match a validated mapping. The command prints only safe
+identifiers, count summaries, and `new_saved: 0`. It never saves readings for
+an unverified identity. Share that JSON without sharing credentials.
 
 A successful response containing zero rows is **not** proof the monitor has
 no history — the interface/instance combination or time range might differ
