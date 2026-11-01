@@ -176,6 +176,16 @@ sqlite3 ~/.local/share/home-air-quality-alexa/readings.sqlite3 \\
 
 If Amazon rejects the request, the CLI prints a safe error category; response
 bodies, authentication tokens, and endpoint identifiers are not printed.
+
+**If you get `status: identity_mismatch`:** Amazon responded with historical
+data, but the interface or instance in the response does not match the
+`aioamazondevices` current sensor metadata. The command now prints only safe
+`requested` and `returned` interface/instance names, response point counts,
+and `new_saved: 0`. Nothing is persisted until we verify the mapping.
+Share that JSON (not any raw response, account file or cookies) to finish the
+mapping. A name mismatch is not proof the data are for a different physical
+sensor; it can be a difference in Alexa's two naming conventions.
+
 A successful response containing zero rows is **not** proof the monitor has
 no history — the interface/instance combination or time range might differ
 from what the Alexa app requests. The implementation deliberately avoids
