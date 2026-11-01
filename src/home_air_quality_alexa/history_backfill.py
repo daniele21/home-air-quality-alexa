@@ -27,7 +27,10 @@ from .history_fetch import (
     run_history_fetch,
 )
 
-SENSOR_ORDER = ("PM25", "PM10", "VOC", "CO", "Humidity", "Air Quality")
+# Live Alexa GraphQL on 2026-11-01 returned valid history for these five
+# monitor channels. PM10 is exposed in library metadata but its historical
+# query was rejected; keep PM10 available only through the manual probe path.
+SENSOR_ORDER = ("PM25", "VOC", "CO", "Humidity", "Air Quality")
 MAX_BATCH_DAYS = 7
 MAX_BACKFILL_DAYS = 366
 MAX_REQUESTS = 365 * len(SENSOR_ORDER)
