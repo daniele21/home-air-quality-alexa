@@ -243,7 +243,7 @@ async def amazon_command(args: argparse.Namespace) -> int:
                 with open_database(args.db.expanduser()) as history_db:
                     result = await run_history_fetch(api, devices, args, history_db)
                 print(json.dumps(result, ensure_ascii=False, indent=2))
-                return 0
+                return 0 if result["status"] == "ok" else 4
             if args.command == "devices":
                 for device in devices.values():
                     keys = sorted(api.sensors.get(device.serial_number, {}))
