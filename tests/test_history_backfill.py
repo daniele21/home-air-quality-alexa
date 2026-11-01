@@ -60,7 +60,7 @@ def result(status="ok", points=24, saved=24):
 
 
 class BackfillPlanTests(unittest.TestCase):
-    def test_default_30_days_six_sensors_180_requests(self):
+    def test_default_30_days_five_verified_sensors_150_requests(self):
         start, end = resolve_bounds(
             None, None, days=30,
             now=datetime(2026, 11, 1, 1, 15, tzinfo=timezone.utc),
@@ -68,9 +68,9 @@ class BackfillPlanTests(unittest.TestCase):
         self.assertEqual(start, date(2026, 10, 2))
         self.assertEqual(end, date(2026, 11, 1))
         tasks = plan_tasks(start, end, SENSOR_ORDER, chunk_days=1)
-        self.assertEqual(len(tasks), 180)
+        self.assertEqual(len(tasks), 150)
         self.assertEqual(tasks[0], HistoryTask("PM25", "2026-10-02", "2026-10-03"))
-        self.assertEqual(tasks[5], HistoryTask("Air Quality", "2026-10-02", "2026-10-03"))
+        self.assertEqual(tasks[4], HistoryTask("Air Quality", "2026-10-02", "2026-10-03"))
         self.assertEqual(tasks[-1], HistoryTask("Air Quality", "2026-10-31", "2026-11-01"))
 
     def test_seven_day_chunks_cover_dates_without_overlap(self):
@@ -113,7 +113,7 @@ class BackfillPlanTests(unittest.TestCase):
                    new_callable=AsyncMock) as fetch:
             out = asyncio.run(run_backfill(api, devices, args(), None))
         self.assertEqual(out["status"], "plan")
-        self.assertEqual(out["planned_requests"], 12)
+        self.assertEqual(out["planned_requests"], 10)
         self.assertEqual(out["sensors"], list(SENSOR_ORDER))
         self.assertFalse(out["apply"])
         fetch.assert_not_called()
