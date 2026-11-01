@@ -180,15 +180,15 @@ async def amazon_command(args: argparse.Namespace) -> int:
     session_file = args.session_file.expanduser()
     stored = load_private_json(session_file)
     last_saved_login = json.dumps(stored, sort_keys=True) if stored else ""
-    if args.command != "login" and not stored:
+    if args.command not in ("login", "login-browser") and not stored:
         LOG.error("Missing login session: first run 'air-quality-alexa login --email YOUR_EMAIL'")
         return 2
     email = args.email or os.getenv("ALEXA_EMAIL")
     if not email:
         LOG.error("Provide --email or set ALEXA_EMAIL")
         return 2
-    if args.command == "login" and stored:
-        LOG.info("Replacing existing session using interactive login")
+    if args.command in ("login", "login-browser") and stored:
+        LOG.info("Replacing existing Amazon session")
     password = ""
     if args.command == "login":
         password = os.getenv("ALEXA_PASSWORD") or getpass.getpass("Amazon password (not stored): ")
@@ -199,11 +199,25 @@ async def amazon_command(args: argparse.Namespace) -> int:
     async with ClientSession() as web_session, httpx.AsyncClient(http2=True, timeout=None) as http2:
         api = AmazonEchoApi(
             client_session=web_session, login_email=email, login_password=password,
-            login_data=None if args.command == "login" else stored,
+            login_data=None if args.command in ("login", "login-browser") else stored,
             save_data=AmazonSaveDataConfig(path=session_file.parent),
         )
         task = None
         try:
+            if args.command == "login-browser":
+                from .device_auth import login_device_code
+                import webbrowser
+
+                def show_code(url: str, code: str) -> None:
+                    print(f"Open {url} in your browser and enter code: {code}", flush=True)
+                    webbrowser.open(url)
+
+                login_state = await login_device_code(
+                    api, web_session, args.marketplace, show_code
+                )
+                save_private_json(session_file, login_state)
+                print("Amazon authorization completed; session saved locally (0600).")
+                return 0
             if args.command == "login":
                 login_state = await api.login.login_mode_interactive(otp)
                 save_private_json(session_file, login_state)
@@ -326,7 +340,9 @@ def main() -> int:
     parser.add_argument("--session-file", type=Path, default=default_config)
     parser.add_argument("--db", type=Path, default=default_db)
     sub = parser.add_subparsers(dest="command", required=True)
-    sub.add_parser("login", help="Interactive OTP login, saves local session")
+    sub.add_parser("login", help="Legacy email/password/OTP login")
+    browser_login = sub.add_parser("login-browser", help="Experimental browser-based device-code login (no password or OTP in CLI)")
+    browser_login.add_argument("--marketplace", choices=("it", "de", "fr", "es", "uk", "us"), default="it")
     sub.add_parser("devices", help="List devices and reported sensors")
     collector = sub.add_parser("collect", help="Collect measurements")
     collector.add_argument("--interval", type=int, default=300, help="Poll interval, at least 300s")
@@ -350,6 +366,10 @@ def main() -> int:
     except KeyboardInterrupt:
         return 130
     except Exception as error:
+        from .device_auth import DeviceAuthorizationError
+        if isinstance(error, DeviceAuthorizationError):
+            LOG.error("%s", error)
+            return 3
         LOG.error("Command failed (%s); see README troubleshooting", type(error).__name__)
         return 1
 
