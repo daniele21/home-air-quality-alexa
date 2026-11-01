@@ -351,7 +351,7 @@ async def fetch_history(api: Any, request: dict[str, Any]) -> dict[str, Any]:
         ) from exc
 
 
-async def run_history_fetch(api: Any, devices: dict[str, Any], args: Any, db: sqlite3.Connection) -> dict[str, Any]:
+async def run_history_fetch(api: Any, devices: dict[str, Any], args: Any, db: sqlite3.Connection | None) -> dict[str, Any]:
     device, sensor = choose_device_sensor(
         devices, api.sensors, serial=args.device, key=args.sensor
     )
@@ -398,21 +398,29 @@ async def run_history_fetch(api: Any, devices: dict[str, Any], args: Any, db: sq
                 "Nothing was saved. Use these metadata fields to establish a safe mapping."
             ),
         }
-    from .collector import SENSOR_UNITS, utc_now
-    unit = SENSOR_UNITS.get(args.sensor) or getattr(sensor, "scale", None)
-    count = store_history(
-        db,
-        serial=device.serial_number,
-        sensor_key=args.sensor,
-        resolution=args.resolution,
-        points=points,
-        fetched_at=utc_now(),
-        unit=unit,
-    )
+    # GraphQL may return an all-empty skeleton with averageValue=0.0.
+    # Treat it as 'no_data', not an average PM2.5 measurement.
+    probe_only = bool(getattr(args, "probe_only", False))
+    count = 0
+    if points and not probe_only:
+        if db is None:
+            raise HistoryFetchError("Database connection required for history import")
+        from .collector import SENSOR_UNITS, utc_now
+        unit = SENSOR_UNITS.get(args.sensor) or getattr(sensor, "scale", None)
+        count = store_history(
+            db,
+            serial=device.serial_number,
+            sensor_key=args.sensor,
+            resolution=args.resolution,
+            points=points,
+            fetched_at=utc_now(),
+            unit=unit,
+        )
     return {
-        "status": "ok",
+        "status": "ok" if points else "no_data",
         "device_name": device.account_name,
         "sensor": args.sensor,
+        "probe_only": probe_only,
         "requested_days": (end - start).days,
         "requested_start_utc": start.isoformat(),
         "requested_end_utc": end.isoformat(),
@@ -422,10 +430,17 @@ async def run_history_fetch(api: Any, devices: dict[str, Any], args: Any, db: sq
         "missing_buckets": meta["missing_buckets"],
         "invalid_buckets": meta["invalid_buckets"],
         "new_saved": count,
+        "would_save": len(points) if probe_only else None,
         "interface_verified": True,
-        "average_value": meta["average_value"],
+        "average_value": meta["average_value"] if points else None,
         "oldest_bucket": min((p[0] for p in points), default=None),
         "newest_bucket": max((p[0] for p in points), default=None),
         "sample": [{"timestamp": t, "value": v} for t, v, _ in points[:3]],
-        "note": "Historical API data is aggregated; stored separately from live sensor readings.",
+        "note": (
+            "No measurements returned; empty graph buckets are missing data, not zeros."
+            if not points else
+            "Read-only availability probe; no historical readings were saved."
+            if probe_only else
+            "Historical API data is aggregated; stored separately from live sensor readings."
+        ),
     }
