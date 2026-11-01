@@ -297,6 +297,88 @@ no history — the interface/instance combination or time range might differ
 from what the Alexa app requests. The implementation deliberately avoids
 guessing alternative parameters or sending batches of speculative calls.
 
+## Resumable six-sensor historical backfill
+
+**Observed cutoff for this monitor on 2026-11-01:** October 1 returned
+`no_data`; October 2, 10, 20 and 30 each returned 24 in-window hourly
+PM2.5 measurements. This is consistent with approximately 30 days of
+retention, but not evidence of an official Amazon policy or other
+monitor/sensor behavior.
+
+The `history-backfill` command performs a controlled, sequential import for
+the six AQM sensors (PM2.5, PM10, VOC, CO, humidity and Air Quality index).
+It defaults to the last **30 completed UTC days**, one day per request,
+with five seconds between requests. For a complete 30-day window with all
+six sensors, the plan contains **180 API requests**. No concurrent/burst
+requests are sent. To reduce risk, the default caps each execution at
+**30 requests**, after which rerunning the same command resumes at the next
+uncompleted window.
+
+**1. Preview the complete plan (no historical requests, no SQLite writes):**
+
+```bash
+cd ~/Projects/home-air-quality-alexa
+git switch research/alexa-history-probe
+git pull --ff-only
+.venv/bin/python -m pip install -e .
+
+.venv/bin/air-quality-alexa history-backfill \\
+  --start 2026-10-02 --end 2026-11-01
+```
+
+**2. Apply a first small batch for the six sensors, October 2-4 (18 requests):**
+
+```bash
+.venv/bin/air-quality-alexa history-backfill \\
+  --start 2026-10-02 --end 2026-10-05 \\
+  --max-requests 18 --delay 5 --apply
+```
+
+**3. After checking the results, complete the remaining days:**
+
+```bash
+.venv/bin/air-quality-alexa history-backfill \\
+  --start 2026-10-02 --end 2026-11-01 \\
+  --max-requests 30 --delay 5 --apply
+```
+
+Repeat the third command until `status: ok` and
+`remaining_requests: 0`. A completed or confirmed-empty window is
+skipped on subsequent runs. Failures and unexpected sensor identity
+mismatches **stop the batch immediately** instead of continuing to send
+requests. Progress checkpoints go to `historical_backfill_windows` in the
+same private SQLite database. Nothing is sent to any external service
+other than the existing authenticated Alexa API.
+
+Options: `--sensor PM25 --sensor VOC` to select particular sensors;
+`--device SERIAL` if multiple air monitors are present; `--chunk-days 7`
+for fewer, longer requests after verifying that range length is supported;
+`--force` to requery the selected windows including ones previously marked
+complete/empty. The `--apply` flag is always required to send historical
+requests.
+
+**Important duplicate-series distinction:** the first 168 historical
+PM2.5 readings were collected with rolling timestamps ending in
+`:47:17`. These records remain untouched, but their hour-long
+aggregation windows overlap hourly windows anchored at `:00`.
+`historical_backfill_windows` tracks completed UTC ranges.
+`historical_hourly_utc` is a **database view of hour-aligned readings only**,
+so it excludes the old offset data and avoids double counting the two
+different query alignments. Query it for downstream hourly charts:
+
+```bash
+sqlite3 ~/.local/share/home-air-quality-alexa/readings.sqlite3 \\
+  "SELECT sensor_key, COUNT(*), MIN(bucket_timestamp_utc),
+    MAX(bucket_timestamp_utc)
+    FROM historical_hourly_utc GROUP BY sensor_key ORDER BY sensor_key;"
+```
+
+This is an import system, **not a scheduled service yet**. The
+`Empty JSON data received` library warning has been nonfatal so far;
+if a batch stops or data quality deteriorates, inspect safe counters and
+stop rather than increasing request frequency. Avoid posting Amazon
+cookies, device endpoint IDs or raw HTTP logs.
+
 ## Tests
 
 ```bash
