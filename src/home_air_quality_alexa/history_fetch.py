@@ -13,10 +13,8 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from http import HTTPMethod
 import math
-import re
 import sqlite3
 from typing import Any
-from yarl import URL
 
 QUERY = """
 query AirQualityLocalHistory($input: AirQualityHistoryInput!) {
@@ -240,6 +238,7 @@ def store_history(
 
 async def fetch_history(api: Any, request: dict[str, Any]) -> dict[str, Any]:
     from aioamazondevices.const.http import REQUEST_AGENT, URI_NEXUS_GRAPHQL
+    from yarl import URL
     try:
         _, resp = await api._http_wrapper.session_request(
             method=HTTPMethod.POST,
