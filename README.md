@@ -149,6 +149,46 @@ git pull
 .venv/bin/air-quality-alexa history-fetch --sensor PM25 --days 7 --resolution ONE_HOUR
 ```
 
+**Confirmed on the user's real monitor (2026-11-01):**
+`history-fetch --sensor PM25 --days 7 --resolution ONE_HOUR`
+returned **169** aggregated slots, **168 valid hourly PM2.5 values**, **one
+missing slot**, and **168 newly inserted SQLite rows**. The response included
+`average_value: 15.0`; this is Amazon's response value, not an independently
+recomputed average. The original rolling query returned timestamps ending in
+`:47:17.226`, because its start/end times followed the command invocation.
+
+**Reproducible time windows:** to prevent successive downloads generating
+different time offsets, `--days` now uses a stable UTC boundary matching the
+selected resolution: five-minute, hourly or daily. Both boundaries are UTC.
+You can also request **fixed calendar windows** with `--start` and `--end`
+(YYYY-MM-DD, UTC, inclusive start / exclusive end). Up to 31 days per call:
+
+```bash
+# An older full month, non-overlapping with the October 25-31 sample
+.venv/bin/air-quality-alexa history-fetch \\
+  --sensor PM25 --resolution ONE_HOUR \\
+  --start 2026-09-01 --end 2026-10-01
+
+# Example: same dates, another air-quality sensor
+.venv/bin/air-quality-alexa history-fetch \\
+  --sensor PM10 --resolution ONE_HOUR \\
+  --start 2026-09-01 --end 2026-10-01
+```
+
+**Data-quality caveat:** the 168 original points remain stored with their
+`:47:17` rolling-window timestamps. A new aligned query that overlaps
+those days will produce *different aggregation windows*, and the exact
+timestamp primary key cannot merge semantically overlapping bins. Do not
+combine or sum overlapping historical rows across different query origins
+as independent observations. For now, prefer **non-overlapping date ranges**
+for backfill and keep the initial data intact. Migration/reconciliation of
+the first rolling window should be a separate reviewed change, not a silent
+timestamp rewrite.
+
+Older history availability is unknown; one-month requests may return gaps
+or less history than requested. Do not infer a retention period from the
+success of the seven-day request.
+
 This makes **one history GraphQL request**, for **one sensor** and a bounded
 seven-day window, after reading device metadata. It uses your existing
 private login session: never share `amazon-login.json`. The collector passes
@@ -158,8 +198,9 @@ its actual Alexa `endpointId`, sensor `interfaceName`, and optional
 `--sensor` supports `PM25`, `PM10`, `VOC`, `CO`, `Humidity`,
 `Air Quality`, or `temperature` (only if the device exposes the key).
 `--resolution` allows `FIVE_MINS`, `ONE_HOUR`, `ONE_DAY`.
-`--days` allows 1 to 31 per request. To request a different sensor, invoke
-it separately; be considerate of Amazon rate limits.
+`--days` allows 1 to 31 per request. `--start` and `--end` allow
+a reproducible UTC date range and override `--days`. To request a different
+sensor, invoke it separately; be considerate of Amazon rate limits.
 
 Results are saved to `historical_readings` in the **same SQLite file** as
 live `readings`, but with a separate primary key including device, sensor,
