@@ -13,7 +13,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from home_air_quality_alexa.history_fetch import (
     QUERY, RESOLUTIONS, HistoryFetchError, build_request,
     choose_device_sensor, history_period, parse_history, store_history,
-    run_history_fetch, safe_identifier,
+    run_history_fetch, safe_identifier, history_identity_matches,
+    AQM_RANGE_INSTANCES, RANGE_HISTORY_INTERFACE,
 )
 
 
@@ -163,6 +164,102 @@ class IdentityValidationTests(unittest.TestCase):
                 "SELECT COUNT(*) FROM sqlite_master WHERE type='table' "
                 "AND name='historical_readings'"
             ).fetchone()[0], 0)
+
+    def test_real_alexa_range_controller_for_pm25_saves_168_historical_points(self):
+        # Reproduce the successful Amazon response contract observed on 2026-11-01:
+        # requested "range", instance "6"; returned "Alexa.RangeController", "6".
+        api = SimpleNamespace(sensors={"ABC": {"PM25": sensor()}})
+        arguments = SimpleNamespace(device=None, sensor="PM25", days=7, resolution="ONE_HOUR")
+        now = datetime.now(timezone.utc)
+        start_bucket = now - timedelta(hours=168)
+        rows = [
+            {
+                "endpointIds": ["AAA_ENDPOINT"],
+                "timestamp": (start_bucket + timedelta(hours=i)).isoformat(),
+                "value": float(10 + i % 8),
+            }
+            for i in range(168)
+        ]
+        rows.append({"endpointIds": [], "timestamp": now.isoformat(), "value": 0.0})
+        payload = response(
+            rows, interface="Alexa.RangeController", instance="6"
+        )
+        with sqlite3.connect(":memory:") as db:
+            with patch("home_air_quality_alexa.history_fetch.fetch_history",
+                       new_callable=AsyncMock, return_value=payload):
+                result = asyncio.run(
+                    run_history_fetch(api, {"ABC": monitor()}, arguments, db)
+                )
+                result_again = asyncio.run(
+                    run_history_fetch(api, {"ABC": monitor()}, arguments, db)
+                )
+            self.assertEqual(result["status"], "ok")
+            self.assertTrue(result["interface_verified"])
+            self.assertEqual(result["points_reported"], 169)
+            self.assertEqual(result["valid_points"], 168)
+            self.assertEqual(result["missing_buckets"], 1)
+            self.assertEqual(result["invalid_buckets"], 0)
+            self.assertEqual(result["new_saved"], 168)
+            self.assertEqual(result_again["new_saved"], 0)
+            self.assertEqual(
+                db.execute("SELECT COUNT(*) FROM historical_readings").fetchone()[0],
+                168,
+            )
+            self.assertEqual(
+                db.execute("SELECT DISTINCT unit FROM historical_readings").fetchone()[0],
+                "µg/m³",
+            )
+
+    def test_alias_does_not_allow_mismatched_instance_or_wrong_sensor(self):
+        for key, instance in AQM_RANGE_INSTANCES.items():
+            current = SimpleNamespace(feature_name="range", instance=instance)
+            self.assertTrue(history_identity_matches(
+                key, current, RANGE_HISTORY_INTERFACE, instance
+            ))
+            self.assertTrue(history_identity_matches(key, current, "range", instance))
+            self.assertFalse(history_identity_matches(
+                key, current, RANGE_HISTORY_INTERFACE, "99"
+            ))
+            self.assertFalse(history_identity_matches(
+                key, current, "Alexa.RangeControllerExtra", instance
+            ))
+        self.assertFalse(history_identity_matches(
+            "PM25", SimpleNamespace(feature_name="range", instance="7"),
+            RANGE_HISTORY_INTERFACE, "7",
+        ))
+        self.assertFalse(history_identity_matches(
+            "temperature", SimpleNamespace(feature_name="range", instance="6"),
+            RANGE_HISTORY_INTERFACE, "6",
+        ))
+        self.assertFalse(history_identity_matches(
+            "PM25", SimpleNamespace(feature_name="other", instance="6"),
+            RANGE_HISTORY_INTERFACE, "6",
+        ))
+
+    def test_real_alias_wrong_instance_never_persists(self):
+        api = SimpleNamespace(sensors={"ABC": {"PM25": sensor()}})
+        arguments = SimpleNamespace(device=None, sensor="PM25", days=1, resolution="ONE_HOUR")
+        date = datetime.now(timezone.utc) - timedelta(hours=1)
+        payload = response(
+            [{"endpointIds": ["AAA_ENDPOINT"], "timestamp": date.isoformat(), "value": 22.0}],
+            interface="Alexa.RangeController",
+            instance="7",
+        )
+        with sqlite3.connect(":memory:") as db:
+            with patch("home_air_quality_alexa.history_fetch.fetch_history",
+                       new_callable=AsyncMock, return_value=payload):
+                result = asyncio.run(
+                    run_history_fetch(api, {"ABC": monitor()}, arguments, db)
+                )
+            self.assertEqual(result["status"], "identity_mismatch")
+            self.assertEqual(result["new_saved"], 0)
+            self.assertEqual(
+                db.execute(
+                    "SELECT COUNT(*) FROM sqlite_master "
+                    "WHERE type='table' AND name='historical_readings'"
+                ).fetchone()[0],
+                0,
+            )
 
     def test_matching_identity_saves_history(self):
         api = SimpleNamespace(sensors={"ABC": {"PM25": sensor()}})
