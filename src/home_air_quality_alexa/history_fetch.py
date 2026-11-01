@@ -246,13 +246,24 @@ def parse_history(
     accepted = []
     invalid = 0
     missing = 0
+    outside_window = 0
     seen = set()
     for row in rows:
         if not isinstance(row, dict):
             invalid += 1
             continue
-        endpoint_ids = row.get("endpointIds")
         dt = _timestamp(row.get("timestamp"))
+        if not dt:
+            invalid += 1
+            continue
+        # Alexa returns both midnight boundaries for full-day ranges: 25
+        # timestamps for a 24-hour ONE_HOUR query. Only accept [start, end).
+        # Do this before checking endpointIds so empty terminal buckets are
+        # not misclassified as genuine in-window missing measurements.
+        if not start <= dt < end:
+            outside_window += 1
+            continue
+        endpoint_ids = row.get("endpointIds")
         value = row.get("value")
         if not isinstance(endpoint_ids, list):
             invalid += 1
@@ -262,9 +273,6 @@ def parse_history(
             continue
         # A single endpoint is requested. Never store a value from another device.
         if endpoint_id not in endpoint_ids:
-            invalid += 1
-            continue
-        if not dt or dt < start - timedelta(days=2) or dt > end + timedelta(days=2):
             invalid += 1
             continue
         if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
@@ -279,6 +287,7 @@ def parse_history(
         "points_reported": len(rows),
         "valid_points": len(accepted),
         "missing_buckets": missing,
+        "outside_window_buckets": outside_window,
         "invalid_buckets": invalid,
         "resolution": history["resolution"],
         "interface": interface_name,
@@ -391,6 +400,7 @@ async def run_history_fetch(api: Any, devices: dict[str, Any], args: Any, db: sq
             "points_reported": meta["points_reported"],
             "points_for_selected_endpoint": meta["valid_points"],
             "missing_buckets": meta["missing_buckets"],
+            "outside_window_buckets": meta["outside_window_buckets"],
             "invalid_buckets": meta["invalid_buckets"],
             "new_saved": 0,
             "note": (
@@ -428,11 +438,13 @@ async def run_history_fetch(api: Any, devices: dict[str, Any], args: Any, db: sq
         "points_reported": meta["points_reported"],
         "valid_points": meta["valid_points"],
         "missing_buckets": meta["missing_buckets"],
+        "outside_window_buckets": meta["outside_window_buckets"],
         "invalid_buckets": meta["invalid_buckets"],
         "new_saved": count,
         "would_save": len(points) if probe_only else None,
         "interface_verified": True,
         "average_value": meta["average_value"] if points else None,
+        "window_average_value": (sum(p[1] for p in points) / len(points)) if points else None,
         "oldest_bucket": min((p[0] for p in points), default=None),
         "newest_bucket": max((p[0] for p in points), default=None),
         "sample": [{"timestamp": t, "value": v} for t, v, _ in points[:3]],
