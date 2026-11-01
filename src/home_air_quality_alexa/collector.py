@@ -224,6 +224,12 @@ async def amazon_command(args: argparse.Namespace) -> int:
                 print("Session saved locally with permissions 0600. Password and OTP not saved.")
                 return 0
             login_state = await api.login.login_mode_stored_data()
+            if args.command == "history-probe":
+                from .history_probe import probe_history_schema
+
+                result = await probe_history_schema(api)
+                print(json.dumps(result, ensure_ascii=False, indent=2))
+                return 0 if result["status"] == "metadata_available" else 4
             devices = await api.get_devices_data()
             if args.command == "devices":
                 for device in devices.values():
@@ -344,6 +350,7 @@ def main() -> int:
     browser_login = sub.add_parser("login-browser", help="Experimental browser-based device-code login (no password or OTP in CLI)")
     browser_login.add_argument("--marketplace", choices=("it", "de", "fr", "es", "uk", "us"), default="it")
     sub.add_parser("devices", help="List devices and reported sensors")
+    sub.add_parser("history-probe", help="Read-only experimental GraphQL schema probe; does NOT download history")
     collector = sub.add_parser("collect", help="Collect measurements")
     collector.add_argument("--interval", type=int, default=300, help="Poll interval, at least 300s")
     collector.add_argument("--device", help="Limit to a device serial shown by 'devices'")
