@@ -185,6 +185,38 @@ for backfill and keep the initial data intact. Migration/reconciliation of
 the first rolling window should be a separate reviewed change, not a silent
 timestamp rewrite.
 
+**Observed September result (2026-11-01):** a one-month hourly request
+(`2026-09-01` through `2026-10-01`, end exclusive) returned 721
+time buckets, **all 721 without endpoint data**, and 0 readings inserted.
+This is an empty response skeleton, **not 721 zero PM2.5 measurements**.
+The server's `averageValue: 0.0` is not a meaningful average with
+no valid points. The CLI now reports `status: no_data` and
+`average_value: null` for such responses. No `historical_readings` table
+is created if there are no usable measurements.
+
+To distinguish a history retention limit from requests that span too much
+time, use **one-day, read-only probes** (one GraphQL request each), without
+altering your existing SQLite database:
+
+```bash
+# Control: a day inside the previously successful seven-day range
+.venv/bin/air-quality-alexa history-fetch --sensor PM25 \\
+  --resolution ONE_HOUR --start 2026-10-30 --end 2026-10-31 \\
+  --probe-only
+
+# Test: a day older than the seven-day range
+.venv/bin/air-quality-alexa history-fetch --sensor PM25 \\
+  --resolution ONE_HOUR --start 2026-10-20 --end 2026-10-21 \\
+  --probe-only
+```
+
+If the first returns data and the second returns `no_data`, a retention
+cutoff becomes more plausible. The month-long empty response alone cannot
+prove a seven-day retention policy. Wait between probes to avoid excessive
+Amazon requests. A `probe_only` result with `status: ok` returns
+`would_save` but always reports `new_saved: 0`. Neither probe opens the
+SQLite file.
+
 Older history availability is unknown; one-month requests may return gaps
 or less history than requested. Do not infer a retention period from the
 success of the seven-day request.
