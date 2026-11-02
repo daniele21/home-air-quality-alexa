@@ -22,7 +22,7 @@ from .dashboard import (
 
 ROME = ZoneInfo("Europe/Rome")
 WHO_PM25_24H = 15.0
-MIN_DAILY_HOURS = 18
+MIN_DAILY_HOURS = 24
 MIN_EVENT_HOURS = 2
 MIN_PERCENTILE_HOURS = 48
 MIN_CORRELATION_PAIRS = 48
@@ -210,7 +210,9 @@ def build_pollution(db: Path, *, days: int = 30, offset: int = 0) -> dict[str, A
     enough = len(values) >= MIN_PERCENTILE_HOURS
     p90 = round(percentile(values, .90), 2) if enough else None
     p50 = round(median(values), 2) if values else None
-    if p90 is not None and (p50 is None or p90 <= p50):
+    # A sparse but meaningful spike may leave p90 equal to the median.
+    # Only a truly flat series has no higher observations at all.
+    if p90 is not None and max(values) <= p90:
         p90 = None
 
     daily = pm25_daily(pm, start_day, end_day)
