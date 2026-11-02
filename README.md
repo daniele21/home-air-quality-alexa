@@ -543,6 +543,30 @@ le coordinate, le note sulle attività o la sessione Amazon.
 e [Copernicus Atmosphere Monitoring Service (CAMS)](https://atmosphere.copernicus.eu/).
 Verifica i termini della fonte per eventuali utilizzi commerciali.
 
+## iPhone access — private tailnet only (prepared, not activated)
+
+A separate, **opt-in and read-only** identity gateway is available at
+`src/home_air_quality_alexa/iphone_gateway.py`. It is designed for
+Tailscale **Serve**, not Funnel, and binds only to
+`127.0.0.1:18767`; the original Airwise service remains on
+`127.0.0.1:8766`. The gateway requires an exact HTTPS tailnet
+hostname plus the `Tailscale-User-Login` authenticated identity
+provided by Serve, and **blocks all POST writes by default**.
+
+**Current status:** Mac mini probe found Tailscale not installed in
+the standard macOS locations, so **there is no iPhone remote access
+yet**. The user must install/sign in to Tailscale on the Mac mini
+and iPhone and grant private tailnet permissions. No remote endpoint
+was enabled by the project.
+
+[Full onboarding and verification](docs/design/iphone-private-access.md)
+includes explicit trust boundary, ACLs, Host/Origin checks,
+CLI status, stop/rollback and manual Safari/VoiceOver follow-up.
+`tests/test_iphone_gateway.py` verifies authorized/denied GET and
+denied POST with localhost fixture servers only. A private Mac
+smoke workflow verified correct proxying without enabling Serve:
+[Actions run](https://github.com/daniele21/local-runner-infra/actions/runs/41469213044).
+
 ## Airwise design skills: mobile-first UI governance
 
 The repository owns **four original Agent Skills**, created after reviewing
