@@ -114,7 +114,8 @@ class ContextTests(unittest.TestCase):
         self.assertTrue(report["outdoor"]["configured"])
         self.assertEqual(len(report["comparison"]["paired_hourly"]),696)
         self.assertNotIn("PRIVATE_DEVICE",str(report))
-        self.assertNotIn("45.5",str(report))
+        self.assertNotIn("\"latitude\"",json.dumps(report))
+        self.assertNotIn("\"longitude\"",json.dumps(report))
         self.assertEqual(self.history.read_bytes(),before)
         with self.assertRaisesRegex(DashboardError,"recentemente"):
             sync_outdoor(date(2026,10,3),date(2026,11,1),db=self.context,fetcher=fake)
