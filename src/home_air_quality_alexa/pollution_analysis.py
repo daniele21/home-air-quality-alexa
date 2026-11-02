@@ -147,6 +147,27 @@ def diurnal_profiles(data: dict[str, dict[datetime, float]]) -> dict[str, list[d
     return result
 
 
+def weekday_hour_heatmaps(data: dict[str, dict[datetime, float]]) -> dict[str, list[list[dict[str, Any]]]]:
+    """Genuine joint local-time weekday x hour cell means, never products of marginals."""
+    result = {}
+    for sensor, values in data.items():
+        buckets: dict[tuple[int, int], list[float]] = defaultdict(list)
+        for dt, value in values.items():
+            local = dt.astimezone(ROME)
+            buckets[(local.weekday(), local.hour)].append(value)
+        result[sensor] = [[
+            {
+                "weekday_local": weekday,
+                "hour_local": hour,
+                "mean": round(sum(buckets[(weekday, hour)]) / len(buckets[(weekday, hour)]), 2)
+                        if buckets[(weekday, hour)] else None,
+                "sample_count": len(buckets[(weekday, hour)]),
+            }
+            for hour in range(24)
+        ] for weekday in range(7)]
+    return result
+
+
 def weekday_profiles(data: dict[str, dict[datetime, float]]) -> dict[str, list[dict[str, Any]]]:
     result = {}
     for sensor, values in data.items():
@@ -227,6 +248,7 @@ def build_pollution(db: Path, *, days: int = 30, offset: int = 0) -> dict[str, A
         },
         "diurnal": diurnal_profiles(series),
         "weekday": weekday_profiles(series),
+        "weekday_hour_heatmap": weekday_hour_heatmaps(series),
         "associations": associations(series),
         "available_channels": [
             {"sensor": k, "label": label, "unit": unit, "hours": len(series.get(k, {}))}
