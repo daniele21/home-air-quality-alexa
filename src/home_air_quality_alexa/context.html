@@ -37,6 +37,9 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
 }
 @media(prefers-reduced-motion:reduce){.aw-nav *{animation:none!important;transition:none!important}}
 @media(max-width:760px){.form label{font-size:14px;line-height:1.4}.form{gap:16px}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.card:first-child{grid-column:1 / -1}.card strong{font-size:clamp(21px,6vw,27px)}.navlinks{display:none}.notice{font-size:13px;line-height:1.6}}
+
+/* Ensure input widgets and secondary actions remain touch-sized on tablet/desktop. */
+input,select,.ghost{min-height:44px}
 </style></head><body><nav class="aw-nav" aria-label="Navigazione principale Airwise"><a href="/">Panoramica</a><a href="/pollution">Inquinamento</a><a href="/context" aria-current="page">Diario e outdoor</a></nav><main class="app">
 <nav><div class="brand">Airwise<b>.</b> <span style="color:#9cbbc1;font-size:11px;letter-spacing:0;font-weight:500">/ Contesto</span></div><div class="navlinks"><a href="/">Panoramica</a><a href="/pollution">Analisi inquinamento</a></div></nav>
 <section class="header"><div><div class="eyebrow">Il perché dei tuoi pattern · ipotesi verificabili</div><h1>La tua aria.<br><em>Nel suo contesto.</em></h1><p class="sub">Annota le attività domestiche e confronta le particelle indoor con le stime outdoor. Nessun algoritmo attribuisce automaticamente la causa dei picchi.</p></div><div class="ctrl"><div class="switch"><button data-days="7" class="choice">7 giorni</button><button data-days="14" class="choice">14 giorni</button><button data-days="30" class="choice active">30 giorni</button></div><button id="older" class="arrow" aria-label="Periodo precedente">‹</button><span id="range" class="period">—</span><button id="newer" class="arrow" aria-label="Periodo successivo" disabled>›</button></div></section>
