@@ -159,7 +159,7 @@ const dateDisplay=x=>new Intl.DateTimeFormat("it-IT",{day:"numeric",month:"short
 const timeDisplay=x=>new Intl.DateTimeFormat("it-IT",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit",timeZone:"Europe/Rome"}).format(new Date(x));
 async function load(){
  qs("error").style.display="none";
- document.querySelectorAll("[data-days]").forEach(b=>b.classList.toggle("active",Number(b.dataset.days)===days));
+ document.querySelectorAll("[data-days]").forEach(b=>{const active=Number(b.dataset.days)===days;b.classList.toggle("active",active);b.setAttribute("aria-pressed",String(active));});
  qs("newer").disabled=offset===0;qs("older").disabled=offset>=90;
  try{let r=await fetch("/api/pollution?days="+days+"&offset="+offset,{cache:"no-store"});let j=await r.json();
  if(!r.ok)throw new Error(j.error||"Impossibile leggere il database");data=j;render();}
