@@ -19,6 +19,13 @@ Use for `dashboard.html`, `pollution.html`, `context.html` and any future local 
 8. Test no data, stale data, partially available sensors, status errors, keyboard-only tab order, screen-reader labels, sunrise / daylight-saving time formatting.
 9. Run `python3 scripts/check_mobile_ui.py`, unit tests and *actual* 320/375/390/768/1024/1440 browser screenshots where a renderer exists. Declare if screenshots were not run.
 
+## Above-the-fold budget
+At 320, 375 and 390px, check *chart visibility and information density*,
+not just overflow. Favor a short analytical title + period selector + one
+primary summary + concise secondary readings + chart. Never let four equal
+large metric tiles monopolize the first viewport. Check visual rhythm and
+typographic scale alongside the mechanical 44px touch target rule.
+
 ## Acceptance matrix
 | Area | Pass |
 | --- | --- |
