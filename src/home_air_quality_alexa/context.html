@@ -76,6 +76,8 @@ input,select,.ghost{min-height:44px}
   .cards{margin:10px 0}
   .chart{margin-top:8px}
 }
+
+#pairedRange{font-size:12px;line-height:1.4;margin-top:8px}
 </style></head><body><nav class="aw-nav" aria-label="Navigazione principale Airwise"><a href="/">Panoramica</a><a href="/pollution">Inquinamento</a><a href="/context" aria-current="page">Diario e outdoor</a></nav><main class="app">
 <nav><div class="brand">Airwise<b>.</b> <span style="color:#9cbbc1;font-size:11px;letter-spacing:0;font-weight:500">/ Contesto</span></div><div class="navlinks"><a href="/">Panoramica</a><a href="/pollution">Analisi inquinamento</a></div></nav>
 <section class="header"><div><div class="eyebrow">Diario delle attività · confronto esterno</div><h1>Contesto <em>domestico.</em></h1><p class="sub">Misure indoor, stime esterne e attività annotate.</p></div><div class="ctrl"><div class="switch"><button data-days="7" class="choice">7 giorni</button><button data-days="14" class="choice">14 giorni</button><button data-days="30" class="choice active">30 giorni</button></div><button id="older" class="arrow" aria-label="Periodo precedente">‹</button><span id="range" class="period">—</span><button id="newer" class="arrow" aria-label="Periodo successivo" disabled>›</button></div></section>
@@ -85,7 +87,7 @@ input,select,.ghost{min-height:44px}
 <div class="card"><label>Ore confrontabili</label><strong id="paired">—</strong><small id="coverage">su quelle selezionate</small></div>
 <div class="card"><label>Media indoor</label><strong id="indoorAvg">—</strong><small>µg/m³</small></div>
 <div class="card"><label>Media outdoor</label><strong id="outdoorAvg">—</strong><small>µg/m³ · modello</small></div></div>
-<div class="chartbox"><canvas class="chart" id="comparison" role="img" aria-label="Confronto orario fra PM2.5 indoor e modello outdoor"></canvas><div class="tip" id="tip"></div></div>
+<div class="chartbox"><canvas class="chart" id="comparison" role="img" aria-label="Confronto orario fra PM2.5 indoor e modello outdoor"></canvas><div class="tip" id="tip"></div></div><p class="hint" id="pairedRange" aria-live="polite">Intervallo di confronto: nessuna ora abbinata.</p>
 <div class="legend"><span><i></i>Alexa indoor</span><span><i class="out"></i>Open-Meteo/CAMS outdoor</span><span><i class="act"></i>Attività annotata</span></div><details class="aw-data-details"><summary>Confronto orario in tabella</summary><div class="aw-table-scroll"><table><thead><tr><th scope="col">Ora UTC</th><th scope="col">Indoor µg/m³</th><th scope="col">Outdoor modellato µg/m³</th></tr></thead><tbody id="outdoorTable"></tbody></table></div></details>
 <details class="aw-data-details"><summary>Come interpretare il confronto indoor/outdoor</summary><p class="meta">Le letture Alexa sono aggregati orari indoor; il dato esterno è una stima di griglia Copernicus CAMS ottenuta con Open-Meteo. La presenza di PM2.5 esterno può contribuire all'aria indoor, ma l'andamento delle due serie non permette di stabilire quanto né di attribuire cause specifiche. Le ore senza dati abbinati non sono interpolate.</p></details></section>
 <aside class="panel"><h2>Fonte outdoor <span class="pill">Opt-in</span></h2><p class="meta">Nessuna richiesta esterna avviene automaticamente. Inserisci una posizione **approssimativa**, non il tuo indirizzo: le coordinate vengono arrotondate a 2 decimali prima di essere inviate a Open-Meteo.</p>
@@ -116,6 +118,9 @@ try{const r=await fetch("/api/context?days="+days+"&offset="+offset,{cache:"no-s
 function render(){
 const p=payload,c=p.comparison;$("range").textContent=formatDate(p.start_date_utc)+" – "+formatDate(previousDay(p.end_date_utc_exclusive));
 $("paired").textContent=c.paired_hours;$("coverage").textContent="ore abbinate";$("indoorAvg").textContent=num(c.mean_indoor);$("outdoorAvg").textContent=num(c.mean_outdoor_model);
+$("pairedRange").textContent=c.paired_hourly.length>=2?
+  "Ore effettivamente confrontate: "+localTime(c.paired_hourly[0].time_utc)+" – "+localTime(c.paired_hourly[c.paired_hourly.length-1].time_utc)+". Le lacune non sono interpolate.":
+  "Nessuna serie oraria abbinata nel periodo selezionato.";
 $("outdoorStatus").textContent=p.outdoor.configured?"Posizione approssimata già configurata. "+(p.outdoor.last_sync_utc?"Ultimo aggiornamento "+localTime(p.outdoor.last_sync_utc):"Nessuna sincronizzazione ancora."):"Posizione non configurata: il confronto outdoor resta vuoto.";
 const entries=$("activities");entries.replaceChildren();
 if(!p.activities.length){const n=document.createElement("p");n.className="hint";n.textContent="Nessuna attività annotata nel periodo selezionato.";entries.append(n)}
@@ -139,7 +144,10 @@ function chart(){
 const canvas=$("comparison"),rect=canvas.getBoundingClientRect(),width=Math.max(260,rect.width),height=260,dpr=Math.min(window.devicePixelRatio||1,2),ctx=canvas.getContext("2d");canvas.width=width*dpr;canvas.height=height*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,width,height);
 const points=payload.comparison.paired_hourly;
 if(points.length<2){ctx.font="12px system-ui";ctx.fillStyle="#9cb8c4";ctx.fillText("Sincronizza l'outdoor per confrontare le misure",15,120);return}
-const begin=Date.parse(payload.start_date_utc+"T00:00:00Z"),end=Date.parse(payload.end_date_utc_exclusive+"T00:00:00Z"),tmax=Math.max(1,end-begin),L=36,R=12,T=15,B=27,w=width-L-R,h=height-T-B;
+// Plot only the observed paired range: an outdoor subset should not collapse
+// into a tiny cluster within a much wider selected window.
+const begin=Date.parse(points[0].time_utc),end=Date.parse(points[points.length-1].time_utc)+3600000,
+  tmax=Math.max(3600000,end-begin),L=36,R=12,T=15,B=27,w=width-L-R,h=height-T-B;
 const max=Math.max(1,...points.flatMap(p=>[p.indoor,p.outdoor_model]))*1.12;
 const x=t=>L+(Date.parse(t)-begin)/tmax*w,y=v=>T+h-(v/max)*h;
 ctx.lineWidth=1;ctx.font="11px system-ui";ctx.textAlign="right";ctx.textBaseline="middle";
