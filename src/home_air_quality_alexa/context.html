@@ -113,7 +113,7 @@ const previousDay=s=>{const d=new Date(s+"T00:00:00Z");d.setUTCDate(d.getUTCDate
 function msg(message,ok=false){const good=$("success"),bad=$("error");good.style.display=bad.style.display="none";const node=ok?good:bad;node.textContent=message;node.style.display="block"}
 function hideMsg(){$("success").style.display=$("error").style.display="none"}
 async function apiPost(url,data){const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)});const value=await r.json();if(!r.ok)throw Error(value.error||"Operazione non riuscita");return value}
-async function load(){hideMsg();document.querySelectorAll("[data-days]").forEach(b=>b.classList.toggle("active",Number(b.dataset.days)===days));$("older").disabled=offset>=90;$("newer").disabled=offset<=0;
+async function load(){hideMsg();document.querySelectorAll("[data-days]").forEach(b=>{const active=Number(b.dataset.days)===days;b.classList.toggle("active",active);b.setAttribute("aria-pressed",String(active));});$("older").disabled=offset>=90;$("newer").disabled=offset<=0;
 try{const r=await fetch("/api/context?days="+days+"&offset="+offset,{cache:"no-store"});const v=await r.json();if(!r.ok)throw Error(v.error||"Dati non disponibili");payload=v;render()}catch(e){msg(e.message)}}
 function render(){
 const p=payload,c=p.comparison;$("range").textContent=formatDate(p.start_date_utc)+" – "+formatDate(previousDay(p.end_date_utc_exclusive));
