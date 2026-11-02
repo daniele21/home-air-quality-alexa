@@ -176,6 +176,27 @@ input,select,.ghost{min-height:44px}
   .content .panel{padding:17px}
   .chartwrap{margin-top:9px}
 }
+
+/* Accessibility reflow: 200% zoom needs one-column analytical regions on
+   medium layouts, and a contained optional sensor rail rather than a wider page. */
+.metrics{grid-template-columns:minmax(180px,1fr) minmax(0,4fr)}
+.secondary-metrics{grid-column:2;min-width:0}
+@media(max-width:1100px){
+  .content,.lower{grid-template-columns:minmax(0,1fr)}
+  .metrics{display:flex;flex-direction:column}
+  .metrics > .metric:first-child{flex:none}
+  .secondary-metrics{grid-column:auto;display:grid;grid-auto-flow:column;
+    grid-auto-columns:minmax(135px,1fr);grid-template-columns:none;
+    overflow-x:auto;max-width:100%;overscroll-behavior-inline:contain}
+  .secondary-metrics .metric{min-width:0}
+  .hero{flex-wrap:wrap;min-width:0}
+  .hero>div{min-width:0}
+}
+@media(min-width:1101px){
+  .metrics>.metric:first-child,.secondary-metrics{min-width:0}
+  .secondary-metrics .metric{padding-inline:clamp(10px,1.2vw,18px)}
+  .secondary-metrics .metric-value{font-size:clamp(23px,2.4vw,34px)}
+}
 </style>
 </head>
 <body>
