@@ -21,6 +21,28 @@ KPI sizes are differentiated. A 100% responsive pass with giant equal-size
 numbers is a design **PARTIAL**, not a design PASS. Review the dashboard
 against `DESIGN.md`'s KPI density budget.
 
+## Actual screenshot review (required for visual changes)
+When visual hierarchy changes, first run the synthetic source-only fixture
+`scripts/synthetic_ui_server.py` on a **different loopback port** from
+the production 8766 server. It contains **no actual private sensor records**.
+Run the Chrome screenshot matrix against that fixture, and review the 375px
+images of **all three pages**, not just layout logs.
+
+Look at the first full screen and answer:
+- What is the first meaningful data finding? Is a plot visible?
+- Are models, measurements and contextual activities unmistakably separate?
+- Are filters aligned? Do headings, badges or disclaimer paragraphs push
+  evidence below the fold?
+- Is the chart scaled to the *observed matched hours*, or distorted by a
+  long empty date range?
+- Do tiny labels, cramped cards or scrollbars compete with the visual story?
+
+If the design has awkward first-screen hierarchy, reopen it even if
+`PASS_LAYOUT` is green. Use *real screenshot evidence* to guide edits.
+Do not use real private readings or diary data in synthetic review logs,
+screenshots or GitHub artifacts. Synthetic screenshots must be visibly
+watermarked as synthetic and must never be passed off as observed air quality.
+
 ## Mechanical checks
 Run `python3 scripts/check_mobile_ui.py` and `python3 -m unittest discover -s tests -v`. Treat these as *static and unit checks only*.
 If a browser runner is available, measure:
