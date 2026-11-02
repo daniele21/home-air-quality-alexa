@@ -31,8 +31,8 @@ WRITE_PATHS = frozenset(("/api/context/activity", "/api/context/delete",
                         "/api/outdoor/sync"))
 COPY_HEADERS = ("Content-Type", "Cache-Control", "Content-Security-Policy",
                 "X-Frame-Options", "X-Content-Type-Options", "Referrer-Policy")
-HOST_PATTERN = re.compile(r"^[a-z0-9](?:[a-z0-9.-]{0,235}[a-z0-9])?\\.ts\\.net$")
-LOGIN_PATTERN = re.compile(r"^[^\\s<>\\x00-\\x1f]{1,240}@" r"[^\\s<>\\x00-\\x1f]{1,150}$")
+HOST_PATTERN = re.compile(r"^[a-z0-9](?:[a-z0-9.-]{0,235}[a-z0-9])?\.ts\.net$")
+LOGIN_PATTERN = re.compile(r"^[^\s<>\x00-\x1f]{1,240}@" r"[^\s<>\x00-\x1f]{1,150}$")
 
 
 def validate_gateway_settings(host: str, login: str) -> tuple[str, str]:
