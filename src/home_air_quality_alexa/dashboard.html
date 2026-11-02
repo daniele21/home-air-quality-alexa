@@ -119,23 +119,25 @@ input,select,.ghost{min-height:44px}
 /* Hierarchy pass: PM2.5 is primary, four secondary sensors are compact.
    The chart takes precedence over decorative statistics on small screens. */
 .metric-value{font-variant-numeric:tabular-nums}
-.metric:first-child{border-color:#42685e}
+.metrics > .metric:first-child{border-color:#42685e}
+.secondary-metrics{grid-column:2 / -1;min-width:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
 @media(max-width:760px){
   .hero h1{font-size:28px!important;line-height:1.12;letter-spacing:-.045em;margin-bottom:5px}
   .hero .eyebrow{font-size:10px}
   .hero .subtitle{font-size:12px;line-height:1.4}
   .hero{margin-bottom:14px!important}
   .controls{gap:7px}
-  .metrics{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible!important;gap:8px;margin:0 0 14px;scroll-snap-type:none}
+  .metrics{display:flex!important;flex-direction:column;overflow:visible!important;gap:8px;margin:0 0 14px;scroll-snap-type:none}
+  .secondary-metrics{display:grid;grid-column:auto;grid-auto-flow:column;grid-auto-columns:150px;grid-template-columns:none;gap:8px;overflow-x:auto;max-width:100%;padding:0 1px 8px;overscroll-behavior-inline:contain;scrollbar-width:thin}
   .metric{min-width:0;min-height:72px;gap:3px;padding:10px 12px;border-radius:13px;scroll-snap-align:none}
-  .metric:first-child{grid-column:1 / -1;min-height:85px;padding:13px 15px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:8px}
-  .metric:first-child .metric-top{grid-column:1;align-self:end}
-  .metric:first-child .metric-value{grid-column:2;grid-row:1 / span 2;font-size:28px;justify-self:end}
-  .metric:first-child .metric-foot{grid-column:1;align-self:start;margin:0}
-  .metric:not(:first-child) .metric-value{font-size:20px;line-height:1.1;margin:2px 0}
+  .metrics > .metric:first-child{grid-column:1 / -1;min-height:85px;padding:13px 15px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:8px}
+  .metrics > .metric:first-child .metric-top{grid-column:1;align-self:end}
+  .metrics > .metric:first-child .metric-value{grid-column:2;grid-row:1 / span 2;font-size:28px;justify-self:end}
+  .metrics > .metric:first-child .metric-foot{grid-column:1;align-self:start;margin:0}
+  .secondary-metrics .metric-value{font-size:20px;line-height:1.1;margin:2px 0}
   .metric-top{font-size:12px}
   .metric-foot{margin-top:2px;gap:4px;font-size:11px}
-  .metric:not(:first-child) .metric-foot span:first-child{display:none}
+  .secondary-metrics .metric-foot span:first-child{display:none}
   .cover{font-size:10px;padding:2px 5px}
   .unit{font-size:11px}
   .sectionline{margin-bottom:8px}
@@ -220,6 +222,7 @@ async function load(){
 function draw(){
   if(!report)return;
   byId("metrics").replaceChildren();
+  const secondary=document.createElement("div");secondary.className="secondary-metrics";secondary.setAttribute("role","group");secondary.setAttribute("aria-label","Altri sensori; scorri orizzontalmente su smartphone");
   for(const ch of report.channels){
     const btn=document.createElement("button");btn.type="button";btn.className="metric"+(ch.key===selected?" selected":"");
     btn.style.setProperty("--accent",colors[ch.key]);
@@ -234,8 +237,10 @@ function draw(){
     const coverage=document.createElement("span");coverage.className="cover";coverage.textContent=fmt(ch.summary.coverage_pct,0)+"% dati";
     foot.append(label,coverage);btn.append(top,v,foot);
     btn.addEventListener("click",()=>{selected=ch.key;draw()});
-    byId("metrics").append(btn);
+    if(ch.key==="PM25")byId("metrics").append(btn);
+    else secondary.append(btn);
   }
+  byId("metrics").append(secondary);
   const ch=current();document.documentElement.style.setProperty("--accent",colors[ch.key]);
   byId("titleTrend").textContent="Andamento orario · "+ch.label;
   byId("selectedUnit").textContent=ch.unit;
