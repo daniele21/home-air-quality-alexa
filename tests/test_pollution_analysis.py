@@ -51,12 +51,12 @@ class PollutionStatsTests(unittest.TestCase):
         points = {dt(20, 0): 3., dt(20, 1): 25., dt(20, 2): 4.}
         self.assertEqual(detect_episodes(points, 20.), [])
 
-    def test_pm25_who_24h_requires_18_hours(self):
+    def test_pm25_who_24h_requires_all_24_hours(self):
         start, end = date(2026, 10, 20), date(2026, 10, 23)
         series = {}
         for i in range(17):
             series[dt(20, i)] = 30.0
-        for i in range(18):
+        for i in range(23):
             series[dt(21, i)] = 16.0
         for i in range(24):
             series[dt(22, i)] = 0.0
@@ -64,9 +64,9 @@ class PollutionStatsTests(unittest.TestCase):
         self.assertEqual(len(days), 3)
         self.assertEqual(days[0]["hours"], 17)
         self.assertIsNone(days[0]["above_who_ambient_reference"])
-        self.assertTrue(days[1]["above_who_ambient_reference"])
+        self.assertIsNone(days[1]["above_who_ambient_reference"])
         self.assertFalse(days[2]["above_who_ambient_reference"])
-        self.assertEqual(MIN_DAILY_HOURS, 18)
+        self.assertEqual(MIN_DAILY_HOURS, 24)
         self.assertEqual(WHO_PM25_24H, 15)
 
     def test_rome_fall_dst_hour_has_two_real_observations(self):
@@ -144,6 +144,8 @@ class PollutionDatabaseTests(unittest.TestCase):
         self.assertAlmostEqual(pm["coverage_pct"], 96.7, places=1)
         self.assertEqual(pm["median"], 10.0)
         self.assertEqual(pm["maximum"], 25.0)
+        self.assertEqual(len(pm["episodes"]), 1)
+        self.assertEqual(pm["episodes"][0]["duration_hours"], 6)
         self.assertEqual(len(pm["daily"]), 30)
         self.assertEqual(pm["complete_days"], 29)
         self.assertEqual(pm["days_above_who_reference"], 0)
