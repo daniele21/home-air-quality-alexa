@@ -63,6 +63,7 @@ METRIC_JS = r"""(() => {
   const tooSmall=actions.filter(e=>!e.disabled && (e.getBoundingClientRect().height<43.5 || e.getBoundingClientRect().width<43.5));
   const dataTables=[...document.querySelectorAll('.aw-data-details table')];
   const px=selector=>{const e=document.querySelector(selector);return e?Math.round(parseFloat(getComputedStyle(e).fontSize)):null};
+  const cardHeight=selector=>{const e=document.querySelector(selector);return e?Math.round(e.getBoundingClientRect().height):null};
   const chart=document.querySelector('canvas');
   const chartTop=chart?Math.round(chart.getBoundingClientRect().top):null;
   return {
@@ -81,7 +82,9 @@ METRIC_JS = r"""(() => {
     primaryKpiPx:px('.metric:first-child .metric-value'),
     secondaryKpiPx:px('.metric:not(:first-child) .metric-value'),
     pollutionKpiPx:px('.tile .v'),
-    contextKpiPx:px('.card strong')
+    contextKpiPx:px('.card strong'),
+    primaryCardHeight:cardHeight('.metrics > .metric:first-child'),
+    secondaryCardHeight:cardHeight('.secondary-metrics .metric')
   };
 })()"""
 
@@ -185,6 +188,11 @@ async def main() -> int:
                 (m["secondaryKpiPx"] or 100) > 23
             ):
                 failures.append(f"{row['screen']}:{row['width']}:oversized_kpi")
+            if row["screen"] == "overview" and (
+                (m["primaryCardHeight"] or 999) > 110
+                or (m["secondaryCardHeight"] or 999) > 92
+            ):
+                failures.append(f"{row['screen']}:{row['width']}:oversized_card")
             if row["screen"] == "pollution" and (m["pollutionKpiPx"] or 100) > 24:
                 failures.append(f"{row['screen']}:{row['width']}:oversized_kpi")
             if row["screen"] == "context" and (m["contextKpiPx"] or 100) > 22:
@@ -195,7 +203,8 @@ async def main() -> int:
             f"nav_fixed={m['navFixed']} tables={m['dataTables']} "
             f"chart_top_px={m['firstChartTopPx']} primary_kpi_px={m['primaryKpiPx']} "
             f"secondary_kpi_px={m['secondaryKpiPx']} "
-            f"pollution_kpi_px={m['pollutionKpiPx']} context_kpi_px={m['contextKpiPx']}"
+            f"pollution_kpi_px={m['pollutionKpiPx']} context_kpi_px={m['contextKpiPx']} "
+            f"primary_card_h={m['primaryCardHeight']} secondary_card_h={m['secondaryCardHeight']}"
         )
     print(f"private_screenshots_saved={result['screenshots']}")
     print("screen_images_location=~/Library/Application Support/Airwise/mobile-qa (Mac only, 0600)")
