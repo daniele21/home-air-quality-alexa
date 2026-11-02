@@ -91,13 +91,23 @@ function renderPatterns(){
  const val=document.createElement("b");val.textContent=fmt(x.mean);
  cell.title=x.sample_count+" ore osservate";bar.append(fill);cell.append(bar,label,val);qs("weekdays").append(cell);});
  qs("sampleInfo").textContent="Ogni media dipende dalla copertura. "+(data.available_channels.find(x=>x.sensor===sensor)?.hours||0)+" ore valide per "+(sensor==="PM25"?"PM2.5":sensor)+".";
- const heat=new Map(),counts=new Map();
- // The API only provides weekday and 24-hour profiles, not joint cells.
- // Hence a genuine joint heatmap is unavailable: do not fabricate 168 values.
+ const groups=data.weekday_hour_heatmap[sensor]||[];
+ const all=groups.flat().map(p=>p.mean).filter(v=>v!==null&&Number.isFinite(v));
+ const low=all.length?Math.min(...all):0, high=all.length?Math.max(...all):1;
  qs("heatmap").replaceChildren();
- const empty=document.createElement("div");empty.className="empty";empty.style.gridColumn="1 / -1";
- empty.textContent="La distribuzione congiunta ora × giorno richiede letture abbinate per le 168 celle. I soli profili aggregati non bastano: nessun valore stimato o inventato.";
- qs("heatmap").append(empty);
+ groups.forEach((line,weekday)=>{
+   line.forEach((cell,hour)=>{
+     const x=document.createElement("div");x.className="heatcell";
+     if(cell.mean!==null){
+       const fraction=high===low?0.55:(cell.mean-low)/(high-low);
+       const alpha=(0.12+fraction*0.84).toFixed(3);
+       x.style.background="rgba(130,230,176,"+alpha+")";
+     }
+     x.title=["Lun","Mar","Mer","Gio","Ven","Sab","Dom"][weekday]+" "+String(hour).padStart(2,"0")+":00: "+fmt(cell.mean)+" "+unit+" · "+cell.sample_count+" ore";
+     x.setAttribute("aria-label",x.title);
+     qs("heatmap").append(x);
+   });
+ });
  const rel=qs("relations");rel.replaceChildren();
  data.associations.forEach(a=>{let node=document.createElement("div");node.className="relation";
  const left=document.createElement("div");left.className="left";const title=document.createElement("b");title.textContent="PM2.5 ↔ "+a.label;const sub=document.createElement("small");sub.textContent=a.paired_hours+" ore abbinate · confronto contemporaneo";left.append(title,sub);
