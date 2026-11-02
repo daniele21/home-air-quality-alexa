@@ -93,22 +93,47 @@ input,select,.ghost{min-height:44px}
  .panel{padding:16px}
  .chart-wrap{margin-top:8px}
 }
+
+.tile .v small{font-size:12px;font-weight:550;letter-spacing:0;color:#aebdc8;margin-left:5px}
+@media(max-width:760px){
+  .app>nav:not(.aw-nav){margin-bottom:14px}
+  .header h1{font-size:26px!important}
+  .header .subtitle{font-size:12px!important;margin:5px 0 0}
+  .header .eyebrow{font-size:10px;margin-bottom:6px}
+  .header{gap:8px!important}
+  .header .ctrl{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:5px 8px;width:100%}
+  .header .ctrl .switch{grid-column:1 / -1;grid-row:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));padding:3px}
+  .header .ctrl .choice{min-height:44px}
+  .header .ctrl #older{grid-column:1;grid-row:2}
+  .header .ctrl .period{grid-column:2;grid-row:2;min-width:0;align-self:center}
+  .header .ctrl #newer{grid-column:3;grid-row:2}
+  .anchor-nav{display:none}
+  .metrics{margin-bottom:8px;gap:7px}
+  .tile{min-height:68px;padding:9px 11px}
+  .tile .v{font-size:20px;margin:5px 0 3px}
+  .tile .s{font-size:10px;line-height:1.35}
+  .tile:nth-child(n+3){min-height:40px}
+  .panel{padding:15px}
+  .panel h2{font-size:17px}
+  .panel>.desc{font-size:12px;line-height:1.4;margin:5px 0 0}
+  .chart-wrap{margin-top:9px}
+}
 </style></head><body><nav class="aw-nav" aria-label="Navigazione principale Airwise">
 <a href="/">Panoramica</a>
 <a href="/pollution" aria-current="page">Inquinamento</a>
 <a href="/context">Diario e outdoor</a>
 </nav><main class="app">
 <nav><div class="brand">Airwise<span>.</span> <span style="font-size:11px;font-weight:540;letter-spacing:0;color:#96aab2">/ Intelligence</span></div><div style="display:flex;gap:9px;flex-wrap:wrap"><a class="back" href="/context">Diario e outdoor ↗</a><a class="back" href="/">← Panoramica</a></div></nav>
-<section class="header"><div><div class="eyebrow">Inquinamento indoor · approfondimenti</div><h1>Analisi <em>inquinamento.</em></h1><p class="subtitle">Picchi PM2.5, ore ricorrenti e associazioni osservate. Dati descrittivi, non valutazioni sanitarie.</p></div>
+<section class="header"><div><div class="eyebrow">Inquinamento indoor · approfondimenti</div><h1>Analisi <em>inquinamento.</em></h1><p class="subtitle">Picchi, ritmi delle 24 ore e relazioni fra sensori.</p></div>
 <div class="ctrl"><div class="switch"><button class="choice" data-days="7">7 giorni</button><button class="choice" data-days="14">14 giorni</button><button class="choice active" data-days="30">30 giorni</button></div><button class="arrow" id="older" aria-label="Periodo precedente">‹</button><span class="period" id="dateRange">—</span><button class="arrow" id="newer" aria-label="Periodo successivo" disabled>›</button></div></section>
 <div class="anchor-nav"><a href="#episodi">01 · Episodi PM2.5</a><a href="#ritmi">02 · Ritmi della casa</a><a href="#relazioni">03 · Relazioni fra sensori</a></div><div id="error" class="warning" role="alert"></div>
-<div class="metrics"><div class="tile"><div class="k">PM2.5 · Mediana</div><div class="v" id="median">—</div><div class="s">Valore centrale delle ore disponibili</div></div>
-<div class="tile"><div class="k">90° percentile</div><div class="v" id="p90">—</div><div class="s">Limite relativo per identificare picchi ricorrenti</div></div>
+<div class="metrics"><div class="tile"><div class="k">PM2.5 · Mediana</div><div class="v"><span id="median">—</span><small>µg/m³</small></div><div class="s">Valore centrale delle ore disponibili</div></div>
+<div class="tile"><div class="k">90° percentile</div><div class="v"><span id="p90">—</span><small>µg/m³</small></div><div class="s">Limite relativo per identificare picchi ricorrenti</div></div>
 <div class="tile"><div class="k">Episodi ≥2 ore</div><div class="v" id="episodeCount">—</div><div class="s">Almeno 2 ore sopra il P90 del periodo</div></div>
 <div class="tile"><div class="k">Copertura PM2.5</div><div class="v" id="coverage">—</div><div class="s" id="coverageHours">Ore osservate su ore attese</div></div></div>
 
 <div class="sec first-section">01 / Particolato e persistenza</div>
-<div class="grid" id="episodi"><section class="panel"><h2>PM2.5 · Le giornate a confronto</h2><p class="desc">Concentrazione media sulle ore disponibili per ciascun giorno UTC. La linea tratteggiata indica il riferimento OMS di 15 µg/m³ su 24 ore, applicabile alle statistiche dell'aria ambientale, non un semaforo di sicurezza domestica.</p><div class="chart-wrap"><canvas id="daily" aria-label="PM2.5 medio giornaliero e riferimento OMS"></canvas><div class="tip" id="dailyTip"></div></div><div class="legend"><span><i></i>Media giornaliera</span><span><i class="ref"></i>OMS 24h · riferimento contestuale</span></div><details class="aw-data-details"><summary>Medie PM2.5 in tabella</summary><div class="aw-table-scroll"><table><thead><tr><th scope="col">Giorno UTC</th><th scope="col">Media µg/m³</th><th scope="col">Ore</th><th scope="col">Confronto 24h</th></tr></thead><tbody id="pm25DailyTable"></tbody></table></div></details></section>
+<div class="grid" id="episodi"><section class="panel"><h2>PM2.5 · Medie giornaliere</h2><p class="desc">Valori orari Alexa aggregati per giorno UTC · riferimento OMS 24h solo contestuale.</p><div class="chart-wrap"><canvas id="daily" aria-label="PM2.5 medio giornaliero e riferimento OMS"></canvas><div class="tip" id="dailyTip"></div></div><div class="legend"><span><i></i>Media giornaliera</span><span><i class="ref"></i>OMS 24h · riferimento contestuale</span></div><details class="aw-data-details"><summary>Come interpretare il riferimento OMS</summary><p class="desc">Le medie usano le ore osservate di ciascun giorno UTC. La linea tratteggiata indica 15 µg/m³ come riferimento OMS per la media di 24 ore dell'aria ambientale; non rappresenta un allarme indoor, né certifica la sicurezza delle misure Alexa. I giorni incompleti non sono classificati rispetto al riferimento.</p></details><details class="aw-data-details"><summary>Medie PM2.5 in tabella</summary><div class="aw-table-scroll"><table><thead><tr><th scope="col">Giorno UTC</th><th scope="col">Media µg/m³</th><th scope="col">Ore</th><th scope="col">Confronto 24h</th></tr></thead><tbody id="pm25DailyTable"></tbody></table></div></details></section>
 <section class="panel"><h2>Giornate e concentrazioni</h2><p class="desc">Il confronto con il riferimento di 24 ore richiede tutte le 24 letture orarie UTC. I giorni incompleti restano visibili, ma non vengono classificati.</p>
 <div class="stat"><span>Giorni confrontabili</span><strong id="complete">—</strong></div>
 <div class="stat"><span>Giorni sopra il riferimento di 24h</span><strong id="whoDays">—</strong></div>
@@ -143,7 +168,7 @@ async function load(){
 const datePrev=x=>{const d=new Date(x+"T00:00:00Z");d.setUTCDate(d.getUTCDate()-1);return d.toISOString().slice(0,10);};
 function render(){
  const p=data.pm25;qs("dateRange").textContent=dateDisplay(data.start_date_utc)+" – "+dateDisplay(datePrev(data.end_date_utc_exclusive));
- qs("median").textContent=fmt(p.median)+" µg/m³";qs("p90").textContent=fmt(p.p90)+" µg/m³";
+ qs("median").textContent=fmt(p.median);qs("p90").textContent=fmt(p.p90);
  qs("episodeCount").textContent=p.episodes.length;qs("coverage").textContent=fmt(p.coverage_pct)+"%";qs("coverageHours").textContent=p.hours_available+" su "+p.hours_expected+" ore";
  qs("complete").textContent=p.complete_days+" / "+data.days;qs("whoDays").textContent=p.days_above_who_reference+" / "+p.complete_days;
  qs("maxHour").textContent=fmt(p.maximum)+" µg/m³";
