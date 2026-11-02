@@ -62,6 +62,9 @@ METRIC_JS = r"""(() => {
   const actions=[...document.querySelectorAll('button,input,select,.aw-nav a')].filter(visible);
   const tooSmall=actions.filter(e=>!e.disabled && (e.getBoundingClientRect().height<43.5 || e.getBoundingClientRect().width<43.5));
   const dataTables=[...document.querySelectorAll('.aw-data-details table')];
+  const px=selector=>{const e=document.querySelector(selector);return e?Math.round(parseFloat(getComputedStyle(e).fontSize)):null};
+  const chart=document.querySelector('canvas');
+  const chartTop=chart?Math.round(chart.getBoundingClientRect().top):null;
   return {
     viewport:Math.round(window.innerWidth),
     scrollWidth:Math.round(doc.scrollWidth),
@@ -72,7 +75,13 @@ METRIC_JS = r"""(() => {
     dataTables:dataTables.length,
     screenshotReady:document.readyState==='complete',
     scriptRendered:!!document.querySelector('canvas'),
-    title:document.title
+    title:document.title,
+    firstChartTopPx:chartTop,
+    mainHeadingPx:px('h1'),
+    primaryKpiPx:px('.metric:first-child .metric-value'),
+    secondaryKpiPx:px('.metric:not(:first-child) .metric-value'),
+    pollutionKpiPx:px('.tile .v'),
+    contextKpiPx:px('.card strong')
   };
 })()"""
 
@@ -168,10 +177,25 @@ async def main() -> int:
             failures.append(f"{row['screen']}:{row['width']}:hit_targets({m['smallActions']})")
         if m["dataTables"] < 1 or not m["scriptRendered"]:
             failures.append(f"{row['screen']}:{row['width']}:chart_alternative")
+        if mobile:
+            if m["firstChartTopPx"] is None or m["firstChartTopPx"] > 844:
+                failures.append(f"{row['screen']}:{row['width']}:chart_below_first_screen")
+            if row["screen"] == "overview" and (
+                (m["primaryKpiPx"] or 100) > 30 or
+                (m["secondaryKpiPx"] or 100) > 23
+            ):
+                failures.append(f"{row['screen']}:{row['width']}:oversized_kpi")
+            if row["screen"] == "pollution" and (m["pollutionKpiPx"] or 100) > 24:
+                failures.append(f"{row['screen']}:{row['width']}:oversized_kpi")
+            if row["screen"] == "context" and (m["contextKpiPx"] or 100) > 22:
+                failures.append(f"{row['screen']}:{row['width']}:oversized_kpi")
         print(
             f"screen={row['screen']} width={row['width']} "
             f"body_overflow_px={overflow} small_actions={m['smallActions']} "
-            f"nav_fixed={m['navFixed']} tables={m['dataTables']}"
+            f"nav_fixed={m['navFixed']} tables={m['dataTables']} "
+            f"chart_top_px={m['firstChartTopPx']} primary_kpi_px={m['primaryKpiPx']} "
+            f"secondary_kpi_px={m['secondaryKpiPx']} "
+            f"pollution_kpi_px={m['pollutionKpiPx']} context_kpi_px={m['contextKpiPx']}"
         )
     print(f"private_screenshots_saved={result['screenshots']}")
     print("screen_images_location=~/Library/Application Support/Airwise/mobile-qa (Mac only, 0600)")
