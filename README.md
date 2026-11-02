@@ -459,6 +459,43 @@ Il pannello è **descrittivo**: i valori e gli indici Alexa non sono
 confrontati con limiti sanitari, soglie di sicurezza o scale che non
 sono state verificate per questi sensori.
 
+### Analisi approfondite degli inquinanti
+
+La nuova pagina [`/pollution`](http://127.0.0.1:8766/pollution)
+offre tre sezioni:
+
+- **Episodi PM2.5**: mediana, 90° percentile empirico, picchi di
+  almeno 2 ore consecutive sopra il percentile, intensità/durata ed
+  eccesso cumulato relativo alla soglia statistica; una lacuna oraria
+  interrompe l'episodio, non viene interpolata.
+- **Distribuzioni temporali**: profilo sulle 24 ore, medie per giorno
+  della settimana e heatmap 7×24 calcolata da vere letture abbinate
+  a giorno e ora nel fuso Europe/Rome. I cambi d'ora sono gestiti
+  senza eliminare né duplicare le misurazioni UTC.
+- **Associazioni**: correlazioni contemporanee di Pearson fra PM2.5
+  e VOC/CO/umidità sulle sole ore presenti in entrambi i canali,
+  disponibili con ≥48 coppie non costanti. La correlazione non
+  consente conclusioni di causalità; Air Quality index, essendo
+  derivato, non è trattato come un sensore indipendente.
+
+Per il PM2.5 è visualizzato **esclusivamente come riferimento**
+il valore OMS 2021 per la media di 24h di particolato fine
+**15 µg/m³ per aria ambientale**. Il confronto è disponibile
+solo se la giornata ha tutte le **24 misurazioni orarie UTC**.
+Non è una certificazione delle misure Amazon indoor né
+una soglia di allarme individuale. Nei giorni incompleti
+si mostra la media delle letture osservate ma non la classificazione.
+
+Il dispositivo Amazon è un sensore consumer di qualità dell'aria
+interna; le sue letture non sono complete per tutte le sostanze e
+il canale CO **non sostituisce un allarme CO certificato**.
+
+Riferimenti:
+- [WHO Global Air Quality Guidelines (2021)](https://www.who.int/news-room/questions-and-answers/item/who-global-air-quality-guidelines)
+- [US EPA: Indoor Particulate Matter](https://www.epa.gov/indoor-air-quality-iaq/sources-indoor-particulate-matter-pm)
+- [US EPA: Low-Cost Air Pollution Monitors](https://www.epa.gov/indoor-air-quality-iaq/low-cost-air-pollution-monitors-and-indoor-air-quality)
+- [Amazon: Using Your Smart Air Quality Monitor](https://digprjsurvey.amazon.co.uk/csad/help/node/G373E3KMG3DN2MX9)
+
 ## Tests
 
 ```bash
