@@ -43,6 +43,24 @@ Do not use real private readings or diary data in synthetic review logs,
 screenshots or GitHub artifacts. Synthetic screenshots must be visibly
 watermarked as synthetic and must never be passed off as observed air quality.
 
+## Synthetic zoom and semantic accessibility quality gate
+
+After screenshot layout tests, run the Mac-local synthetic fixture and
+`scripts/accessibility_audit.py` (via the guarded private self-hosted
+workflow) to verify all three pages at 375/768/1280 px, including
+**simulated 200% CSS zoom**. The browser gate must check:
+- no document-wide horizontal overflow in the stress variants;
+- keyboard Tab progression with visible focus and named buttons/links;
+- one selected `aria-pressed="true"` period control of the three;
+- one main H1/navigation landmark, accessible chart tables and a
+  populated semantic 7×24 heatmap alternative.
+
+Do not call this a *VoiceOver* pass; Chrome Accessibility tree isn't
+an iOS screen reader. For release, follow
+`docs/design/iphone-voiceover-checklist.md` and explicitly report
+whether Safari on a physical iPhone and VoiceOver were actually tested.
+Keep production Mac service loopback-only; no unauthenticated tunneling.
+
 ## Mechanical checks
 Run `python3 scripts/check_mobile_ui.py` and `python3 -m unittest discover -s tests -v`. Treat these as *static and unit checks only*.
 If a browser runner is available, measure:
