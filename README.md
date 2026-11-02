@@ -496,6 +496,53 @@ Riferimenti:
 - [US EPA: Low-Cost Air Pollution Monitors](https://www.epa.gov/indoor-air-quality-iaq/low-cost-air-pollution-monitors-and-indoor-air-quality)
 - [Amazon: Using Your Smart Air Quality Monitor](https://digprjsurvey.amazon.co.uk/csad/help/node/G373E3KMG3DN2MX9)
 
+### Diario domestico e confronto outdoor (solo con consenso esplicito)
+
+La nuova vista locale `http://127.0.0.1:8766/context`, raggiungibile
+anche dalla pagina **Analisi inquinamento**, separa due fonti:
+
+1. **Annotazioni manuali**: cucina, finestre aperte, pulizie,
+   candele/incenso, ventilazione, riscaldamento e altro. Ogni evento
+   contiene data/ora, durata e una nota facoltativa. Le annotazioni
+   possono essere eliminate e sono conservate in
+   `~/.local/share/home-air-quality-alexa/context.sqlite3`
+   (file locale, permessi 0600), **separato** dal database originale
+   delle misurazioni Alexa.
+2. **PM2.5 esterno modellato**: premendo esplicitamente
+   `Scarica le stime PM2.5 outdoor` e inserendo latitudine/longitudine
+   approssimate, il Mac interroga **solo**
+   `https://air-quality-api.open-meteo.com/v1/air-quality`.
+   Le coordinate sono arrotondate a **2 cifre decimali** prima dell'invio
+   e salvate solo nel database locale. Nessuna posizione è dedotta
+   automaticamente dal browser o dall'account Amazon.
+
+Open-Meteo aggrega dati **Copernicus CAMS** su celle modellistiche
+(europeo circa 11 km; globale più grossolano): NON sono misure di una
+centralina davanti alla casa. Le misure Amazon e le stime CAMS vengono
+abbinate **solo sulle stesse ore UTC**, senza interpolare mancanze;
+sono mostrate medie delle ore condivise e differenza descrittiva.
+In aggiunta, sul grafico vengono visualizzati i momenti annotati
+delle attività, mentre un semplice delta prima/dopo mostra due ore
+precedenti contro le due successive, ove tutte presenti. L'intervento
+non può essere attribuito causalmente da questi soli dati.
+
+Il browser contatta soltanto il server Mac sulla porta 8766; la
+richiesta Open-Meteo viene emessa **dal backend solo su azione
+esplicita**. L'API delle annotazioni richiede POST JSON
+**dalla stessa Origin** e verifica l'header Host, con un corpo limitato;
+la vista è accessibile solo su loopback. Non si creano connessioni
+in uscita con il semplice caricamento della dashboard. Esiste un
+limite locale di 15 minuti tra sincronizzazioni outdoor.
+
+Per cancellare soltanto il diario e le stime outdoor, arresta Airwise
+prima di eliminare il file `context.sqlite3`; il database
+`readings.sqlite3` non viene toccato. Non pubblicare in GitHub
+le coordinate, le note sulle attività o la sessione Amazon.
+
+**Attribuzione:** [Open-Meteo Air Quality API](https://open-meteo.com/en/docs/air-quality-api)
+e [Copernicus Atmosphere Monitoring Service (CAMS)](https://atmosphere.copernicus.eu/).
+Verifica i termini della fonte per eventuali utilizzi commerciali.
+
 ## Tests
 
 ```bash
