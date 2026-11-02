@@ -81,14 +81,14 @@ class ContextTests(unittest.TestCase):
             delete_activity("' OR 1=1 --",db=self.context)
 
     def test_openmeteo_schema_and_utc_bounds(self):
-        values=_parse_open_meteo(api_data(hours=49),date(2026,10,3),date(2026,10,5))
+        values=_parse_open_meteo(json.loads(api_data(hours=49)),date(2026,10,3),date(2026,10,5))
         self.assertEqual(len(values),48)
         self.assertEqual(values[0][0],"2026-10-03T00:00:00+00:00")
         self.assertEqual(values[-1][0],"2026-10-04T23:00:00+00:00")
         with self.assertRaises(DashboardError):
-            _parse_open_meteo(api_data(hours=1,override={"utc_offset_seconds":3600}),date(2026,10,3),date(2026,10,4))
+            _parse_open_meteo(json.loads(api_data(hours=1,override={"utc_offset_seconds":3600})),date(2026,10,3),date(2026,10,4))
         with self.assertRaises(DashboardError):
-            _parse_open_meteo(api_data(hours=1,override={"hourly_units":{"pm2_5":"ppm"}}),date(2026,10,3),date(2026,10,4))
+            _parse_open_meteo(json.loads(api_data(hours=1,override={"hourly_units":{"pm2_5":"ppm"}})),date(2026,10,3),date(2026,10,4))
         self.assertEqual(_position(45.4963,9.2012),(45.5,9.2))
         for x,y in [(float("nan"),1),(100,0),("45.5",9.2)]:
             with self.assertRaises(DashboardError):
