@@ -77,16 +77,21 @@ input,select,.ghost{min-height:44px}
 @media(max-width:760px){
  .header h1{font-size:28px!important;letter-spacing:-.045em;line-height:1.12}
  .header .subtitle{font-size:12px;line-height:1.5}
- .header{margin-bottom:14px!important}
- .anchor-nav{margin:12px 0}
- .sec{margin:18px 0 10px}
- .metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:14px}
- .tile{padding:11px 12px;min-height:84px;border-radius:13px}
+ .header{margin-bottom:8px!important}
+ .anchor-nav{margin:8px 0}
+ .sec{margin:12px 0 8px}
+ #episodi{display:none}
+ .metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:8px}
+ .tile{padding:11px 12px;min-height:80px;border-radius:13px}
  .tile .k{font-size:11px;line-height:1.3}
  .tile .v{font-size:21px;letter-spacing:-.03em;line-height:1.05;margin:7px 0 4px}
  .tile .s{font-size:11px;line-height:1.3}
+ .tile:nth-child(n+3){display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:44px;padding:8px 10px;background:transparent}
+ .tile:nth-child(n+3) .k{font-size:11px;line-height:1.25}
+ .tile:nth-child(n+3) .v{font-size:17px;line-height:1;margin:0;white-space:nowrap}
+ .tile:nth-child(n+3) .s{display:none}
  .panel{padding:16px}
- .chart-wrap{margin-top:14px}
+ .chart-wrap{margin-top:8px}
 }
 </style></head><body><nav class="aw-nav" aria-label="Navigazione principale Airwise">
 <a href="/">Panoramica</a>
@@ -99,7 +104,7 @@ input,select,.ghost{min-height:44px}
 <div class="anchor-nav"><a href="#episodi">01 · Episodi PM2.5</a><a href="#ritmi">02 · Ritmi della casa</a><a href="#relazioni">03 · Relazioni fra sensori</a></div><div id="error" class="warning" role="alert"></div>
 <div class="metrics"><div class="tile"><div class="k">PM2.5 · Mediana</div><div class="v" id="median">—</div><div class="s">Valore centrale delle ore disponibili</div></div>
 <div class="tile"><div class="k">90° percentile</div><div class="v" id="p90">—</div><div class="s">Limite relativo per identificare picchi ricorrenti</div></div>
-<div class="tile"><div class="k">Episodi consecutivi</div><div class="v" id="episodeCount">—</div><div class="s">Almeno 2 ore sopra il P90 del periodo</div></div>
+<div class="tile"><div class="k">Episodi ≥2 ore</div><div class="v" id="episodeCount">—</div><div class="s">Almeno 2 ore sopra il P90 del periodo</div></div>
 <div class="tile"><div class="k">Copertura PM2.5</div><div class="v" id="coverage">—</div><div class="s" id="coverageHours">Ore osservate su ore attese</div></div></div>
 
 <div class="sec" id="episodi">01 / Particolato e persistenza</div>
