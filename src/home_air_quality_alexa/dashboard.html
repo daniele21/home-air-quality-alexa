@@ -129,8 +129,9 @@ input,select,.ghost{min-height:44px}
   .controls{gap:7px}
   .metrics{display:flex!important;flex-direction:column;overflow:visible!important;gap:8px;margin:0 0 14px;scroll-snap-type:none}
   .secondary-metrics{display:grid;grid-column:auto;grid-auto-flow:column;grid-auto-columns:150px;grid-template-columns:none;gap:8px;overflow-x:auto;max-width:100%;padding:0 1px 8px;overscroll-behavior-inline:contain;scrollbar-width:thin}
+  .secondary-metrics .metric{flex:none;min-height:72px}
   .metric{min-width:0;min-height:72px;gap:3px;padding:10px 12px;border-radius:13px;scroll-snap-align:none}
-  .metrics > .metric:first-child{grid-column:1 / -1;min-height:85px;padding:13px 15px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:8px}
+  .metrics > .metric:first-child{flex:0 0 auto;grid-column:1 / -1;min-height:85px;padding:13px 15px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:8px}
   .metrics > .metric:first-child .metric-top{grid-column:1;align-self:end}
   .metrics > .metric:first-child .metric-value{grid-column:2;grid-row:1 / span 2;font-size:28px;justify-self:end}
   .metrics > .metric:first-child .metric-foot{grid-column:1;align-self:start;margin:0}
