@@ -14,6 +14,13 @@ Use before a UI PR merge, after a mobile-first implementation, or for a visual b
 3. **Harden:** test no data, partial data, stale measurement, HTML escaping of diary notes, invalid outdoor location, HTTP 400, no network, iOS keyboard viewport.
 4. **Polish & verify:** compare real browser screenshots side-by-side at 320, 375, 390, 768, 1024, 1440 px, zoom 200%, landscape and reduced-motion. Do not claim render verification when only a parser has run.
 
+## Hierarchy review
+Measure whether the first meaningful plot starts within the first
+~1–2 viewport heights on 320/375/390px, and confirm primary vs secondary
+KPI sizes are differentiated. A 100% responsive pass with giant equal-size
+numbers is a design **PARTIAL**, not a design PASS. Review the dashboard
+against `DESIGN.md`'s KPI density budget.
+
 ## Mechanical checks
 Run `python3 scripts/check_mobile_ui.py` and `python3 -m unittest discover -s tests -v`. Treat these as *static and unit checks only*.
 If a browser runner is available, measure:
