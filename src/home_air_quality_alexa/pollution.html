@@ -20,7 +20,58 @@ h1{font-size:clamp(32px,4.3vw,57px);letter-spacing:-.06em;line-height:1.05;margi
 .weekday{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin:20px 0}.wd{min-width:0;text-align:center}.wdbar{background:#223542;height:83px;display:flex;align-items:flex-end;border-radius:7px;overflow:hidden}.wdbar i{display:block;width:100%;background:linear-gradient(#b1f4ce,#488b83);border-radius:6px 6px 0 0}.wd label{display:block;font-size:10px;color:#91a6b2;margin-top:8px}.wd b{font-size:11px;font-weight:650;color:#d6e8e9}
 .relation{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:17px 0;border-bottom:1px solid #324655}.relation .left b{display:block;font-size:14px}.relation .left small{display:block;color:#a4b8c2;font-size:11px;margin-top:5px}.r{font-size:25px;letter-spacing:-.03em;font-weight:730;color:#a4e1c8}.r.no{color:#8297a6;font-size:15px}.disclaimer{color:#8299a6;font-size:11px;line-height:1.75;border-top:1px solid #263d49;margin-top:24px;padding-top:17px}.warning{display:none;margin:18px 0;background:#3b262d;border-radius:12px;padding:15px;font-size:12px;color:#ffd0d0}
 @media(max-width:870px){.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.grid{grid-template-columns:1fr}.panel{padding:19px}.heatcell{height:34px}.header{align-items:flex-start}}@media(max-width:550px){.app{padding:20px 15px 40px}.metrics{gap:8px}.tile{padding:16px}.tile .v{font-size:28px}.heatmap{gap:3px}.heatcell{height:25px}.ctrl{justify-content:flex-start}.period{min-width:95px}.panel h2{font-size:17px}.header{margin-bottom:14px}}@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-</style></head><body><main class="app">
+/* Airwise original mobile-first design pass: see DESIGN.md and local agent skills. */
+:root{--aq-background:#0b121b;--aq-surface:#142534;--aq-border:#334b58;--aq-text:#f2faf7;--aq-muted:#b6c7d0;--aq-indoor:#9ce8c2;--aq-outdoor:#f0c58e;--aq-note:#d6b3f2;--aq-focus:#b6f6d4;--aq-touch-target:44px}
+.aw-nav{max-width:1240px;margin:10px auto 0;padding:0 34px;display:flex;justify-content:flex-end;gap:9px}
+.aw-nav a{display:flex;align-items:center;justify-content:center;min-height:44px;padding:10px 15px;border:1px solid #37515a;border-radius:12px;color:#cbdde2;text-decoration:none;font-size:14px;font-weight:650;white-space:nowrap}
+.aw-nav a[aria-current="page"]{color:#112e26;background:#b7f1d1;border-color:#b7f1d1}
+.aw-nav a:focus-visible{outline:3px solid var(--aq-focus);outline-offset:3px}
+.step,.arrow{width:44px!important;height:44px!important;min-width:44px}
+.pill,.choice{min-height:44px!important;padding-inline:13px!important}
+.metric,.ghost,.action{min-height:44px}
+button,select,input{touch-action:manipulation}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--aq-focus);outline-offset:3px}
+.aw-data-details{margin-top:16px;border:1px solid #37515a;border-radius:12px;background:#162936;padding:12px 14px}
+.aw-data-details summary{cursor:pointer;color:#cce9dd;font-weight:650;font-size:14px;min-height:44px;display:flex;align-items:center}
+.aw-table-scroll{overflow-x:auto;overscroll-behavior-inline:contain}
+.aw-data-details table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+.aw-data-details th,.aw-data-details td{padding:9px;text-align:left;border-bottom:1px solid #37515a;white-space:nowrap}
+.aw-data-details th{color:#b6c7d0}
+.aw-nav~.shell,.aw-nav~.app{min-width:0}
+@media(max-width:760px){
+  .aw-nav{position:fixed;z-index:50;bottom:0;left:0;right:0;margin:0;padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));width:100%;max-width:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;background:#0d1c29f7;border-top:1px solid #38535e;box-shadow:0 -10px 34px #0004;backdrop-filter:blur(14px)}
+  .aw-nav a{white-space:normal;text-align:center;line-height:1.22;font-size:12px;padding:8px 3px;min-height:48px}
+  .shell,.app{padding-bottom:calc(106px + env(safe-area-inset-bottom,0px))!important}
+  .hero h1,.header h1,h1{font-size:clamp(28px,8vw,36px)!important;line-height:1.12}
+  .hero,.header{gap:14px!important}
+  .eyebrow{margin-bottom:7px!important}
+  .top,.header{margin-bottom:18px!important}
+  .panel-sub,.desc,.meta,.sub,.subtitle{font-size:14px;line-height:1.55}
+  .notice,.hint,.footnote,.disclaimer{font-size:12px}
+  .metrics{scrollbar-width:thin}
+  .aw-nav~.shell .top a[href="/pollution"],.aw-nav~.app .navlinks,.aw-nav~.app nav .back{display:none}
+  .twocol{grid-template-columns:1fr!important}
+  .form input,.form select,select{font-size:16px!important;min-height:44px!important}
+}
+@media(prefers-reduced-motion:reduce){.aw-nav *{animation:none!important;transition:none!important}}
+
+/* Keep dense matrix readable on mobile without scrolling the entire document. */
+.aw-heatmap-scroll{overflow-x:auto;max-width:100%;overscroll-behavior-inline:contain;scrollbar-width:thin;padding-bottom:8px}
+.aw-heatmap-scroll:focus-visible{outline:3px solid var(--aq-focus);outline-offset:2px}
+.heatmap{min-width:600px;grid-template-columns:repeat(24,minmax(20px,1fr))}
+.heatcell{min-width:20px}
+@media(max-width:760px){
+  .anchor-nav{overflow-x:auto;flex-wrap:nowrap;overscroll-behavior-inline:contain;padding-bottom:8px}
+  .anchor-nav a{white-space:nowrap;min-height:44px;display:flex;align-items:center}
+  .selectline select{width:100%}
+  .event{align-items:flex-start}
+  .heatlabel{font-size:12px;line-height:1.4}
+}
+</style></head><body><nav class="aw-nav" aria-label="Navigazione principale Airwise">
+<a href="/">Panoramica</a>
+<a href="/pollution" aria-current="page">Inquinamento</a>
+<a href="/context">Diario e outdoor</a>
+</nav><main class="app">
 <nav><div class="brand">Airwise<span>.</span> <span style="font-size:11px;font-weight:540;letter-spacing:0;color:#96aab2">/ Intelligence</span></div><div style="display:flex;gap:9px;flex-wrap:wrap"><a class="back" href="/context">Diario e outdoor ↗</a><a class="back" href="/">← Panoramica</a></div></nav>
 <section class="header"><div><div class="eyebrow">Inquinamento indoor · approfondimenti</div><h1>Dentro i dati.<br><em>Oltre la media.</em></h1><p class="subtitle">Episodi di particolato, pattern quotidiani e associazioni fra indicatori. Analisi statistiche dello storico locale, non valutazioni sanitarie.</p></div>
 <div class="ctrl"><div class="switch"><button class="choice" data-days="7">7 giorni</button><button class="choice" data-days="14">14 giorni</button><button class="choice active" data-days="30">30 giorni</button></div><button class="arrow" id="older" aria-label="Periodo precedente">‹</button><span class="period" id="dateRange">—</span><button class="arrow" id="newer" aria-label="Periodo successivo" disabled>›</button></div></section>
@@ -31,7 +82,7 @@ h1{font-size:clamp(32px,4.3vw,57px);letter-spacing:-.06em;line-height:1.05;margi
 <div class="tile"><div class="k">Copertura PM2.5</div><div class="v" id="coverage">—</div><div class="s" id="coverageHours">Ore osservate su ore attese</div></div></div>
 
 <div class="sec" id="episodi">01 / Particolato e persistenza</div>
-<div class="grid"><section class="panel"><h2>PM2.5 · Le giornate a confronto</h2><p class="desc">Concentrazione media sulle ore disponibili per ciascun giorno UTC. La linea tratteggiata indica il riferimento OMS di 15 µg/m³ su 24 ore, applicabile alle statistiche dell'aria ambientale, non un semaforo di sicurezza domestica.</p><div class="chart-wrap"><canvas id="daily" aria-label="PM2.5 medio giornaliero e riferimento OMS"></canvas><div class="tip" id="dailyTip"></div></div><div class="legend"><span><i></i>Media giornaliera</span><span><i class="ref"></i>OMS 24h · riferimento contestuale</span></div></section>
+<div class="grid"><section class="panel"><h2>PM2.5 · Le giornate a confronto</h2><p class="desc">Concentrazione media sulle ore disponibili per ciascun giorno UTC. La linea tratteggiata indica il riferimento OMS di 15 µg/m³ su 24 ore, applicabile alle statistiche dell'aria ambientale, non un semaforo di sicurezza domestica.</p><div class="chart-wrap"><canvas id="daily" aria-label="PM2.5 medio giornaliero e riferimento OMS"></canvas><div class="tip" id="dailyTip"></div></div><div class="legend"><span><i></i>Media giornaliera</span><span><i class="ref"></i>OMS 24h · riferimento contestuale</span></div><details class="aw-data-details"><summary>Medie PM2.5 in tabella</summary><div class="aw-table-scroll"><table><thead><tr><th scope="col">Giorno UTC</th><th scope="col">Media µg/m³</th><th scope="col">Ore</th><th scope="col">Confronto 24h</th></tr></thead><tbody id="pm25DailyTable"></tbody></table></div></details></section>
 <section class="panel"><h2>Giornate e concentrazioni</h2><p class="desc">Il confronto con il riferimento di 24 ore richiede tutte le 24 letture orarie UTC. I giorni incompleti restano visibili, ma non vengono classificati.</p>
 <div class="stat"><span>Giorni confrontabili</span><strong id="complete">—</strong></div>
 <div class="stat"><span>Giorni sopra il riferimento di 24h</span><strong id="whoDays">—</strong></div>
@@ -40,9 +91,9 @@ h1{font-size:clamp(32px,4.3vw,57px);letter-spacing:-.06em;line-height:1.05;margi
 <div class="grid"><section class="panel"><h2>Episodi sopra il normale del periodo</h2><p class="desc">Raggruppiamo ore consecutive sopra il 90° percentile storico. Il criterio è relativo: serve a individuare eventi da esplorare, non a generare allarmi sanitari.</p><div class="episodes" id="events"><div class="empty">Analisi in caricamento...</div></div></section><section class="panel"><h2>Come leggere i picchi</h2><p class="desc">Un evento prolungato può pesare più di un picco molto breve. La classifica ordina gli episodi secondo l'eccesso cumulativo rispetto al P90.</p><div class="note">Cucina, candele, pulizie e infiltrazione di aria esterna sono possibili sorgenti di particolato indoor. I soli sensori non identificano la causa: per verificarla sono utili annotazioni contestuali delle attività.</div></section></div>
 
 <div class="sec" id="ritmi">02 / Quando succede</div>
-<div class="grid"><section class="panel"><div class="selectline"><div><h2>Profilo delle 24 ore</h2><p class="desc">Media per ora locale italiana (Europe/Rome), considerando il cambio fra ora legale e solare.</p></div><select id="channel" aria-label="Indicatore dei ritmi"><option value="PM25">PM2.5</option><option value="VOC">VOC</option><option value="CO">CO</option><option value="Humidity">Umidità</option><option value="Air Quality">Indice Alexa</option></select></div><div class="chart-wrap"><canvas id="diurnal" aria-label="Medie per ora del giorno"></canvas><div class="tip" id="diurnalTip"></div></div><div class="legend">I valori delle diverse grandezze non vengono normalizzati o sommati.</div></section>
+<div class="grid"><section class="panel"><div class="selectline"><div><h2>Profilo delle 24 ore</h2><p class="desc">Media per ora locale italiana (Europe/Rome), considerando il cambio fra ora legale e solare.</p></div><select id="channel" aria-label="Indicatore dei ritmi"><option value="PM25">PM2.5</option><option value="VOC">VOC</option><option value="CO">CO</option><option value="Humidity">Umidità</option><option value="Air Quality">Indice Alexa</option></select></div><div class="chart-wrap"><canvas id="diurnal" aria-label="Medie per ora del giorno"></canvas><div class="tip" id="diurnalTip"></div></div><div class="legend">I valori delle diverse grandezze non vengono normalizzati o sommati.</div><details class="aw-data-details"><summary>Valori delle 24 ore in tabella</summary><div class="aw-table-scroll"><table><thead><tr><th scope="col">Ora locale</th><th scope="col">Media</th><th scope="col">Campioni</th></tr></thead><tbody id="diurnalTable"></tbody></table></div></details></section>
 <section class="panel"><h2>Giorni della settimana</h2><p class="desc">Media per giorno locale, senza attribuire cause alle differenze.</p><div class="weekday" id="weekdays"></div><div class="note" id="sampleInfo">Ogni media va letta insieme al numero di osservazioni disponibili.</div></section></div>
-<section class="panel"><h2>Heatmap: giorni × ore</h2><p class="desc">Ogni cella mostra la media del sensore selezionato per quell’ora locale nel giorno della settimana. Il colore riflette solo il minimo e il massimo osservati nel periodo, non livelli sanitari.</p><div class="heatmap" id="heatmap" role="img" aria-label="Pattern per ora e giorno della settimana"></div><div class="heatlabel"><span>Lunedì · 00:00</span><span>Ogni riga = 1 giorno, 24 colonne = ore locali</span><span>Domenica · 23:00</span></div></section>
+<section class="panel"><h2>Heatmap: giorni × ore</h2><p class="desc">Ogni cella mostra la media del sensore selezionato per quell’ora locale nel giorno della settimana. Il colore riflette solo il minimo e il massimo osservati nel periodo, non livelli sanitari.</p><div class="aw-heatmap-scroll" tabindex="0" role="region" aria-label="Scorri lateralmente la heatmap delle 24 ore"><div class="heatmap" id="heatmap" role="img" aria-label="Pattern per ora e giorno della settimana"></div></div><div class="heatlabel"><span>Lunedì · 00:00</span><span>Ogni riga = 1 giorno, 24 colonne = ore locali</span><span>Domenica · 23:00</span></div></section>
 
 <div class="sec" id="relazioni">03 / Come cambiano insieme</div>
 <div class="grid"><section class="panel"><h2>Associazioni con PM2.5</h2><p class="desc">Coefficiente di Pearson sulle stesse ore UTC registrate da entrambi i sensori. Disponibile con almeno 48 coppie e variazione sufficiente. Non misura causalità.</p><div id="relations"></div></section>
@@ -70,6 +121,15 @@ function render(){
  qs("episodeCount").textContent=p.episodes.length;qs("coverage").textContent=fmt(p.coverage_pct)+"%";qs("coverageHours").textContent=p.hours_available+" su "+p.hours_expected+" ore";
  qs("complete").textContent=p.complete_days+" / "+data.days;qs("whoDays").textContent=p.days_above_who_reference+" / "+p.complete_days;
  qs("maxHour").textContent=fmt(p.maximum)+" µg/m³";
+ const dailyTable=qs("pm25DailyTable");dailyTable.replaceChildren();
+ for(const day of p.daily){
+   const tr=document.createElement("tr");
+   const values=[day.date_utc,fmt(day.mean,2),String(day.hours)+"/24",
+     day.above_who_ambient_reference===null?"Non confrontabile":day.above_who_ambient_reference?"Sopra riferimento":"Non sopra riferimento"];
+   for(const value of values){const td=document.createElement("td");td.textContent=value;tr.append(td)}
+   dailyTable.append(tr);
+ }
+
  qs("events").replaceChildren();
  if(!p.episodes.length){let e=document.createElement("div");e.className="empty";e.textContent=p.hours_available<48?"Non ci sono abbastanza ore per stimare episodi rispetto al P90.":"Non emergono episodi consecutivi di almeno due ore sopra il P90.";qs("events").append(e);}
  for(const ev of p.episodes){let row=document.createElement("div");row.className="event";
@@ -83,6 +143,13 @@ function render(){
 }
 function renderPatterns(){
  const pts=data.diurnal[sensor]||[];const wd=data.weekday[sensor]||[];const unit=units[sensor];
+ const table=qs("diurnalTable");table.replaceChildren();
+ for(const point of pts){const tr=document.createElement("tr");
+   for(const value of [String(point.hour_local).padStart(2,"0")+":00",fmt(point.mean,2)+" "+unit,String(point.sample_count)]){
+     const td=document.createElement("td");td.textContent=value;tr.append(td)}
+   table.append(tr);
+ }
+
  drawLine(qs("diurnal"),qs("diurnalTip"),pts.map(x=>({v:x.mean,label:String(x.hour_local).padStart(2,"0")+":00 · "+x.sample_count+" campioni"})),null,unit,true);
  qs("weekdays").replaceChildren();const wmax=Math.max(1,...wd.map(x=>x.mean||0));const wdnames=["Lun","Mar","Mer","Gio","Ven","Sab","Dom"];
  wd.forEach(x=>{const cell=document.createElement("div");cell.className="wd";const bar=document.createElement("div");bar.className="wdbar";
@@ -132,6 +199,7 @@ function drawLine(canvas,tip,pts,ref,unit,diurnal){
  canvas.onpointermove=e=>{const r=canvas.getBoundingClientRect(),p=e.clientX-r.left,i=Math.max(0,Math.min(pts.length-1,Math.round((p-L)/ww*(pts.length-1))));
  tip.style.display="block";tip.style.left=Math.max(3,Math.min(w-165,p+9))+"px";tip.style.top=Math.max(2,e.clientY-r.top-46)+"px";
  tip.textContent=pts[i].label+" · "+fmt(pts[i].v)+" "+unit+(pts[i].complete===false?" · dati parziali":"");};
+ canvas.onpointerdown=e=>canvas.onpointermove(e);
  canvas.onpointerleave=()=>tip.style.display="none";
 }
 document.querySelectorAll("[data-days]").forEach(el=>el.addEventListener("click",()=>{days=Number(el.dataset.days);offset=0;load()}));
