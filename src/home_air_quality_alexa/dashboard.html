@@ -112,6 +112,9 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
   .form input,.form select,select{font-size:16px!important;min-height:44px!important}
 }
 @media(prefers-reduced-motion:reduce){.aw-nav *{animation:none!important;transition:none!important}}
+
+/* Ensure input widgets and secondary actions remain touch-sized on tablet/desktop. */
+input,select,.ghost{min-height:44px}
 </style>
 </head>
 <body>
