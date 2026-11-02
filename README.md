@@ -410,6 +410,55 @@ Temperature is an independently exposed hardware sensor but was not
 part of this five-channel historical backfill: its GraphQL history
 mapping has not yet been verified.
 
+## Airwise: dashboard locale dello storico
+
+`src/home_air_quality_alexa/dashboard.py` è un server **solo localhost**
+realizzato con la libreria standard Python; `dashboard.html` è una UI
+responsive senza CDN, librerie JS, font esterni o raccolta di analytics.
+I dati restano nel database SQLite del Mac, aperto esclusivamente in
+**lettura** (`mode=ro` e `PRAGMA query_only`).
+
+Caratteristiche: selezione sensore, trend orario reale con gap espliciti,
+medie giornaliere, sovrapposizione del periodo precedente, min/max,
+copertura in ore, vista giornaliera e navigazione tra periodi di 7, 14 o
+30 giorni. Le medie dei periodi sono confrontate solo se **entrambi**
+raggiungono almeno il 50% di copertura; altrimenti il confronto indica
+`n.d.`. Tutte le date e le ore sono marcate **UTC** (nessuna
+ambiguità nei cambi d'ora ottobre/marzo).
+
+Si usano **solo** le letture storiche orarie allineate a inizio ora.
+Le prime 168 letture PM2.5 con offset `:47` restano preservate ma non
+entrano nei grafici; non si mescolano mai sensori con unità diverse.
+La finestra recente è ancorata al giorno dell'ultima lettura oraria
+presente, non alla data del browser, per non far sparire dati vecchi.
+
+Avvio manuale sul Mac:
+
+```bash
+cd ~/Projects/home-air-quality-alexa
+git switch research/alexa-history-probe
+git pull --ff-only
+.venv/bin/python -m pip install -e .
+.venv/bin/python -m home_air_quality_alexa.dashboard --port 8766
+```
+
+Aprire dal **Mac mini**: http://127.0.0.1:8766/
+L'API di sola lettura è `/api/dashboard?days=7&offset=0`
+(`days=7|14|30`, `offset` in giorni da 0 a 90).
+
+È previsto anche un workflow centrale self-hosted **separato** per
+installare la stessa dashboard sotto un LaunchAgent macOS, dopo
+validazione del commit sorgente e del database sul runner. Nessun
+workflow automatico del collector viene creato da questa funzionalità.
+`127.0.0.1` è **accessibile solo dalla macchina**: l'accesso dallo
+smartphone richiede una configurazione privata separata, per esempio
+Tailscale Serve con verifica esplicita delle regole d'accesso. Non
+aprire la porta al pubblico o impostare `0.0.0.0`.
+
+Il pannello è **descrittivo**: i valori e gli indici Alexa non sono
+confrontati con limiti sanitari, soglie di sicurezza o scale che non
+sono state verificate per questi sensori.
+
 ## Tests
 
 ```bash
