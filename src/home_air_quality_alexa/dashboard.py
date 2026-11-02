@@ -27,6 +27,7 @@ CHANNELS = (
 )
 DEFAULT_DB = Path.home() / ".local/share/home-air-quality-alexa/readings.sqlite3"
 STATIC_FILE = Path(__file__).with_name("dashboard.html")
+POLLUTION_FILE = Path(__file__).with_name("pollution.html")
 ALLOWED_DAYS = (7, 14, 30)
 MAX_OFFSET = 90
 
@@ -252,14 +253,26 @@ def _make_handler(db: Path):
                     return
                 self._send(200, content, "text/html; charset=utf-8")
                 return
-            if parsed.path == "/api/dashboard":
+            if parsed.path == "/pollution":
+                try:
+                    content = POLLUTION_FILE.read_bytes()
+                except OSError:
+                    self._send(503, b"Pollution view not installed", "text/plain; charset=utf-8")
+                    return
+                self._send(200, content, "text/html; charset=utf-8")
+                return
+            if parsed.path in ("/api/dashboard", "/api/pollution"):
                 try:
                     params = parse_qs(parsed.query, keep_blank_values=True, strict_parsing=True)
                     if any(key not in ("days", "offset") or len(val) != 1 for key, val in params.items()):
                         raise DashboardError("Parametri API non validi")
                     days = int(params.get("days", ["7"])[0])
                     offset = int(params.get("offset", ["0"])[0])
-                    report = build_dashboard(db, days=days, offset=offset)
+                    if parsed.path == "/api/dashboard":
+                        report = build_dashboard(db, days=days, offset=offset)
+                    else:
+                        from .pollution_analysis import build_pollution
+                        report = build_pollution(db, days=days, offset=offset)
                     response = json.dumps(report, ensure_ascii=False, allow_nan=False).encode("utf-8")
                     self._send(200, response, "application/json; charset=utf-8")
                 except (ValueError, DashboardError) as exc:
