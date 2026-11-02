@@ -543,6 +543,49 @@ le coordinate, le note sulle attività o la sessione Amazon.
 e [Copernicus Atmosphere Monitoring Service (CAMS)](https://atmosphere.copernicus.eu/).
 Verifica i termini della fonte per eventuali utilizzi commerciali.
 
+## Airwise design skills: mobile-first UI governance
+
+The repository owns **four original Agent Skills**, created after reviewing
+popular public GitHub design-skill projects. They live under `.agents/skills/`
+and are connected by [AGENTS.md](AGENTS.md) and a shared
+[DESIGN.md](DESIGN.md).
+
+| Original skill | Responsibility |
+| --- | --- |
+| [airwise-design-direction](.agents/skills/airwise-design-direction/SKILL.md) | Product-specific visual identity, hierarchy and semantic tokens |
+| [airwise-mobile-first](.agents/skills/airwise-mobile-first/SKILL.md) | Responsive thumb navigation, 44px actions, forms, safe areas |
+| [airwise-data-viz](.agents/skills/airwise-data-viz/SKILL.md) | Honest PM2.5/VOС/CO charts, units, model vs measurement |
+| [airwise-visual-qa](.agents/skills/airwise-visual-qa/SKILL.md) | Audit → critique → harden → polish with explicit evidence |
+
+Research, links, license notes and the rationale for which ideas were
+*conceptually merged*: [skill-sources.md](docs/design/skill-sources.md).
+First source-code review with P1 findings and delivery phases:
+[audit-2026-11-02.md](docs/design/audit-2026-11-02.md).
+
+### First implementation pass
+
+All three Airwise pages now share consistent, thumb-friendly navigation.
+On mobile the three destinations are displayed as a fixed bottom bar with
+safe-area padding. Touch targets are 44px or larger where enforced by
+the shared mobile rules, and the diary's inputs are at least 16px.
+The pollution 24-hour heatmap scrolls within its own region instead of
+compressing all cells to a narrow phone screen. Hourly, daily and
+indoor/outdoor visualizations have adjacent semantic HTML data tables;
+their canvas tooltips also respond to pointer-down/tap.
+
+Offline structural gate:
+
+```bash
+python3 scripts/check_mobile_ui.py
+python3 -m unittest discover -s tests -v
+```
+
+**A passing static gate does not replace actual mobile screenshots,
+focus/touch testing or screen reader testing.** Viewport matrix:
+320/375/390/768/1024/1440 px, 200% zoom, keyboard and reduced motion.
+The visual QA skill defines an explicit **PARTIAL** status until those
+rendered tests are run.
+
 ## Tests
 
 ```bash
