@@ -7,6 +7,7 @@ inferred, sent to GitHub, or included in request logs.
 from __future__ import annotations
 
 from datetime import datetime, date, time, timedelta, timezone
+from contextlib import contextmanager
 from pathlib import Path
 import json
 import math
@@ -51,7 +52,8 @@ def utc_time(value: Any) -> datetime:
     return dt
 
 
-def private_db(path: Path = CONTEXT_DB) -> sqlite3.Connection:
+@contextmanager
+def private_db(path: Path = CONTEXT_DB):
     parent = path.parent
     parent.mkdir(parents=True, exist_ok=True, mode=0o700)
     if parent.is_symlink() or path.is_symlink():
@@ -66,8 +68,9 @@ def private_db(path: Path = CONTEXT_DB) -> sqlite3.Connection:
         raise DashboardError("Database non creato")
     os.chmod(path, 0o600)
     connection.execute("PRAGMA busy_timeout=8000")
-    with connection:
-        connection.executescript("""
+    try:
+        with connection:
+            connection.executescript("""
         CREATE TABLE IF NOT EXISTS activity_notes (
             id TEXT PRIMARY KEY,
             activity TEXT NOT NULL,
@@ -93,7 +96,9 @@ def private_db(path: Path = CONTEXT_DB) -> sqlite3.Connection:
             provider TEXT NOT NULL
         );
         """)
-    return connection
+        yield connection
+    finally:
+        connection.close()
 
 
 def add_activity(payload: dict[str, Any], *, db: Path = CONTEXT_DB) -> dict[str, Any]:
@@ -211,7 +216,7 @@ def sync_outdoor(start: date, end_exclusive: date, *, db: Path = CONTEXT_DB,
     params=urlencode({"latitude":lat, "longitude":lon, "hourly":"pm2_5",
                       "timezone":"GMT", "start_date":start.isoformat(),
                       "end_date":(end_exclusive-timedelta(days=1)).isoformat(),
-                      "domains":"cams_europe"})
+                      "domains":"auto"})
     req=Request(OUTDOOR_URL+"?"+params, headers={"User-Agent":"Airwise-local/0.1", "Accept":"application/json"})
     try:
         if fetcher is None:
