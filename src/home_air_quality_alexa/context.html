@@ -56,18 +56,38 @@ input,select,.ghost{min-height:44px}
  .panel{padding:16px}
  .chart{margin-top:13px}
 }
+
+@media(max-width:760px){
+  .app>nav:not(.aw-nav){margin-bottom:13px}
+  .header h1{font-size:26px!important}
+  .header .eyebrow{font-size:10px;letter-spacing:.10em;margin-bottom:6px}
+  .header .sub{font-size:12px!important;margin-top:6px}
+  .header{gap:8px!important}
+  .header .ctrl{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:5px 8px;width:100%}
+  .header .ctrl .switch{grid-column:1 / -1;grid-row:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));padding:3px}
+  .header .ctrl .choice{min-height:44px}
+  .header .ctrl #older{grid-column:1;grid-row:2}
+  .header .ctrl .period{grid-column:2;grid-row:2;min-width:0;align-self:center}
+  .header .ctrl #newer{grid-column:3;grid-row:2}
+  .section{margin:12px 0 9px}
+  .panel{padding:15px}
+  .panel h2{font-size:17px}
+  .panel>.meta{font-size:12px;line-height:1.45;margin-top:6px}
+  .cards{margin:10px 0}
+  .chart{margin-top:8px}
+}
 </style></head><body><nav class="aw-nav" aria-label="Navigazione principale Airwise"><a href="/">Panoramica</a><a href="/pollution">Inquinamento</a><a href="/context" aria-current="page">Diario e outdoor</a></nav><main class="app">
 <nav><div class="brand">Airwise<b>.</b> <span style="color:#9cbbc1;font-size:11px;letter-spacing:0;font-weight:500">/ Contesto</span></div><div class="navlinks"><a href="/">Panoramica</a><a href="/pollution">Analisi inquinamento</a></div></nav>
-<section class="header"><div><div class="eyebrow">Il perché dei tuoi pattern · ipotesi verificabili</div><h1>Contesto <em>domestico.</em></h1><p class="sub">Confronta PM2.5 indoor ed esterno, e annota le attività che potrebbero coincidere con i picchi.</p></div><div class="ctrl"><div class="switch"><button data-days="7" class="choice">7 giorni</button><button data-days="14" class="choice">14 giorni</button><button data-days="30" class="choice active">30 giorni</button></div><button id="older" class="arrow" aria-label="Periodo precedente">‹</button><span id="range" class="period">—</span><button id="newer" class="arrow" aria-label="Periodo successivo" disabled>›</button></div></section>
+<section class="header"><div><div class="eyebrow">Diario delle attività · confronto esterno</div><h1>Contesto <em>domestico.</em></h1><p class="sub">Misure indoor, stime esterne e attività annotate.</p></div><div class="ctrl"><div class="switch"><button data-days="7" class="choice">7 giorni</button><button data-days="14" class="choice">14 giorni</button><button data-days="30" class="choice active">30 giorni</button></div><button id="older" class="arrow" aria-label="Periodo precedente">‹</button><span id="range" class="period">—</span><button id="newer" class="arrow" aria-label="Periodo successivo" disabled>›</button></div></section>
 <div id="error" class="error" role="alert"></div><div id="success" class="success" role="status"></div>
 <div class="section">01 / Inquinamento dentro e fuori casa</div>
-<div class="grid"><section class="panel"><h2>PM2.5 · Indoor vs modello esterno</h2><p class="meta">Confrontiamo soltanto ore UTC presenti in entrambe le serie. La misura indoor Alexa è un aggregato orario; il dato esterno è una stima CAMS di griglia tramite Open-Meteo.</p><div class="cards">
+<div class="grid"><section class="panel"><h2>PM2.5 · Dentro e fuori</h2><p class="meta">Alexa indoor (misurazione) vs CAMS outdoor (stima modellistica), sulle stesse ore UTC.</p><div class="cards">
 <div class="card"><label>Ore confrontabili</label><strong id="paired">—</strong><small id="coverage">su quelle selezionate</small></div>
 <div class="card"><label>Media indoor</label><strong id="indoorAvg">—</strong><small>µg/m³</small></div>
 <div class="card"><label>Media outdoor</label><strong id="outdoorAvg">—</strong><small>µg/m³ · modello</small></div></div>
 <div class="chartbox"><canvas class="chart" id="comparison" role="img" aria-label="Confronto orario fra PM2.5 indoor e modello outdoor"></canvas><div class="tip" id="tip"></div></div>
 <div class="legend"><span><i></i>Alexa indoor</span><span><i class="out"></i>Open-Meteo/CAMS outdoor</span><span><i class="act"></i>Attività annotata</span></div><details class="aw-data-details"><summary>Confronto orario in tabella</summary><div class="aw-table-scroll"><table><thead><tr><th scope="col">Ora UTC</th><th scope="col">Indoor µg/m³</th><th scope="col">Outdoor modellato µg/m³</th></tr></thead><tbody id="outdoorTable"></tbody></table></div></details>
-<div class="notice">La presenza di particolato esterno può contribuire all'aria indoor, ma questo grafico non permette di stabilire quanto né di attribuire cause. Le due serie derivano da strumenti e metodi diversi.</div></section>
+<details class="aw-data-details"><summary>Come interpretare il confronto indoor/outdoor</summary><p class="meta">Le letture Alexa sono aggregati orari indoor; il dato esterno è una stima di griglia Copernicus CAMS ottenuta con Open-Meteo. La presenza di PM2.5 esterno può contribuire all'aria indoor, ma l'andamento delle due serie non permette di stabilire quanto né di attribuire cause specifiche. Le ore senza dati abbinati non sono interpolate.</p></details></section>
 <aside class="panel"><h2>Fonte outdoor <span class="pill">Opt-in</span></h2><p class="meta">Nessuna richiesta esterna avviene automaticamente. Inserisci una posizione **approssimativa**, non il tuo indirizzo: le coordinate vengono arrotondate a 2 decimali prima di essere inviate a Open-Meteo.</p>
 <form id="outdoorForm" class="form"><div class="twocol"><div><label for="lat">Latitudine (opzionale se già salvata)</label><input id="lat" type="number" step="0.01" min="-90" max="90" placeholder="Es. 45.50"></div><div><label for="lon">Longitudine</label><input id="lon" type="number" step="0.01" min="-180" max="180" placeholder="Es. 9.20"></div></div><button id="sync" class="action" type="submit">Scarica le stime PM2.5 outdoor</button></form>
 <p class="hint" id="outdoorStatus">Non ancora configurato.</p>
