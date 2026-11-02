@@ -208,6 +208,8 @@ class PollutionDatabaseTests(unittest.TestCase):
         html = POLLUTION_FILE.read_text("utf-8")
         self.assertIn("/api/pollution", html)
         self.assertIn("id=\"heatmap\"", html)
+        self.assertIn('id="heatmapTableBody"', html)
+        self.assertIn('aria-pressed', html)
         self.assertIn("id=\"events\"", html)
         self.assertIn("id=\"relations\"", html)
         self.assertIn('href="/"', html)
