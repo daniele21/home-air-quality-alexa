@@ -18,3 +18,6 @@ air-quality-alexa = "home_air_quality_alexa.collector:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+home_air_quality_alexa = ["dashboard.html"]
