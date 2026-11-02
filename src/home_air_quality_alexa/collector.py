@@ -184,9 +184,15 @@ async def amazon_command(args: argparse.Namespace) -> int:
         LOG.error("Missing login session: first run 'air-quality-alexa login --email YOUR_EMAIL'")
         return 2
     email = args.email or os.getenv("ALEXA_EMAIL")
-    if not email:
-        LOG.error("Provide --email or set ALEXA_EMAIL")
+    if not email and args.command in ("login", "login-browser"):
+        LOG.error("Provide --email or set ALEXA_EMAIL when starting authentication")
         return 2
+    # Stored-session API calls authenticate via the saved cookies/token, not
+    # the original login email. aioamazondevices only uses login_email for
+    # diagnostic messages in login_mode_stored_data(). Avoid making an
+    # unattended Mac runner duplicate the account email in GitHub secrets.
+    if not email:
+        email = ""
     if args.command in ("login", "login-browser") and stored:
         LOG.info("Replacing existing Amazon session")
     password = ""
@@ -224,7 +230,40 @@ async def amazon_command(args: argparse.Namespace) -> int:
                 print("Session saved locally with permissions 0600. Password and OTP not saved.")
                 return 0
             login_state = await api.login.login_mode_stored_data()
+            if args.command == "history-probe":
+                from .history_probe import probe_history_schema
+
+                result = await probe_history_schema(api)
+                print(json.dumps(result, ensure_ascii=False, indent=2))
+                return 0 if result["status"] == "metadata_available" else 4
+            if args.command == "history-inspect":
+                from .history_inspect import inspect_history_queries
+
+                result = await inspect_history_queries(api)
+                print(json.dumps(result, ensure_ascii=False, indent=2))
+                return 0 if result["status"] in ("metadata_available", "partial_metadata") else 4
             devices = await api.get_devices_data()
+            if args.command == "history-fetch":
+                from .history_fetch import run_history_fetch
+
+                if args.probe_only:
+                    # No database is opened or modified in probe mode.
+                    result = await run_history_fetch(api, devices, args, None)
+                else:
+                    with open_database(args.db.expanduser()) as history_db:
+                        result = await run_history_fetch(api, devices, args, history_db)
+                print(json.dumps(result, ensure_ascii=False, indent=2))
+                return 0 if result["status"] in ("ok", "no_data") else 4
+            if args.command == "history-backfill":
+                from .history_backfill import run_backfill
+
+                if args.apply:
+                    with open_database(args.db.expanduser()) as history_db:
+                        result = await run_backfill(api, devices, args, history_db)
+                else:
+                    result = await run_backfill(api, devices, args, None)
+                print(json.dumps(result, ensure_ascii=False, indent=2))
+                return 0 if result["status"] in ("plan", "ok", "partial_limit_reached") else 4
             if args.command == "devices":
                 for device in devices.values():
                     keys = sorted(api.sensors.get(device.serial_number, {}))
@@ -344,6 +383,28 @@ def main() -> int:
     browser_login = sub.add_parser("login-browser", help="Experimental browser-based device-code login (no password or OTP in CLI)")
     browser_login.add_argument("--marketplace", choices=("it", "de", "fr", "es", "uk", "us"), default="it")
     sub.add_parser("devices", help="List devices and reported sensors")
+    sub.add_parser("history-probe", help="Read-only experimental GraphQL schema probe; does NOT download history")
+    sub.add_parser("history-inspect", help="Read-only GraphQL signatures for identified history queries; does NOT download history")
+    history_fetch = sub.add_parser("history-fetch", help="Download one historical Alexa air quality series to separate SQLite table")
+    history_fetch.add_argument("--sensor", choices=("PM25", "PM10", "VOC", "CO", "Humidity", "Air Quality", "temperature"), default="PM25")
+    history_fetch.add_argument("--days", type=int, default=7, help="Historical lookback (1-31 days); UTC-aligned, ignored if --start/--end supplied")
+    history_fetch.add_argument("--start", help="UTC start date YYYY-MM-DD, inclusive; requires --end")
+    history_fetch.add_argument("--end", help="UTC end date YYYY-MM-DD, exclusive; requires --start")
+    history_fetch.add_argument("--resolution", choices=("FIVE_MINS", "ONE_HOUR", "ONE_DAY"), default="ONE_HOUR")
+    history_fetch.add_argument("--device", help="Monitor serial; required when multiple matching monitors exist")
+    history_fetch.add_argument("--probe-only", action="store_true", help="Request one historical window and print a summary without touching SQLite")
+    backfill = sub.add_parser("history-backfill", help="Plan or run resumable, rate-limited multi-sensor history import")
+    backfill.add_argument("--start", help="UTC start YYYY-MM-DD, inclusive (default: last 30 completed UTC days)")
+    backfill.add_argument("--end", help="UTC end YYYY-MM-DD, exclusive (default: current UTC midnight)")
+    backfill.add_argument("--days", type=int, default=30, help="Days of history when --start/--end omitted (default 30)")
+    backfill.add_argument("--sensor", action="append", choices=("PM25", "VOC", "CO", "Humidity", "Air Quality"), help="Select one sensor; repeat to select more (default: all six)")
+    backfill.add_argument("--device", help="Monitor serial; required for multiple monitors")
+    backfill.add_argument("--resolution", choices=("ONE_HOUR", "FIVE_MINS", "ONE_DAY"), default="ONE_HOUR")
+    backfill.add_argument("--chunk-days", type=int, default=1, help="UTC days per query, 1..7 (default 1)")
+    backfill.add_argument("--delay", type=float, default=5.0, help="Seconds between private API requests, 3..120")
+    backfill.add_argument("--max-requests", type=int, default=30, help="Maximum calls this run (default 30); resume to continue")
+    backfill.add_argument("--apply", action="store_true", help="Actually call the history API and update SQLite; without it, plan only")
+    backfill.add_argument("--force", action="store_true", help="Requery even successfully completed windows (only with --apply)")
     collector = sub.add_parser("collect", help="Collect measurements")
     collector.add_argument("--interval", type=int, default=300, help="Poll interval, at least 300s")
     collector.add_argument("--device", help="Limit to a device serial shown by 'devices'")
@@ -367,7 +428,8 @@ def main() -> int:
         return 130
     except Exception as error:
         from .device_auth import DeviceAuthorizationError
-        if isinstance(error, DeviceAuthorizationError):
+        from .history_fetch import HistoryFetchError
+        if isinstance(error, (DeviceAuthorizationError, HistoryFetchError)):
             LOG.error("%s", error)
             return 3
         LOG.error("Command failed (%s); see README troubleshooting", type(error).__name__)
