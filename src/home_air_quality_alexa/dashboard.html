@@ -115,6 +115,37 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
 
 /* Ensure input widgets and secondary actions remain touch-sized on tablet/desktop. */
 input,select,.ghost{min-height:44px}
+
+/* Hierarchy pass: PM2.5 is primary, four secondary sensors are compact.
+   The chart takes precedence over decorative statistics on small screens. */
+.metric-value{font-variant-numeric:tabular-nums}
+.metric:first-child{border-color:#42685e}
+@media(max-width:760px){
+  .hero h1{font-size:28px!important;line-height:1.12;letter-spacing:-.045em;margin-bottom:5px}
+  .hero .eyebrow{font-size:10px}
+  .hero .subtitle{font-size:12px;line-height:1.4}
+  .hero{margin-bottom:14px!important}
+  .controls{gap:7px}
+  .metrics{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible!important;gap:8px;margin:0 0 14px;scroll-snap-type:none}
+  .metric{min-width:0;min-height:72px;gap:3px;padding:10px 12px;border-radius:13px;scroll-snap-align:none}
+  .metric:first-child{grid-column:1 / -1;min-height:85px;padding:13px 15px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:8px}
+  .metric:first-child .metric-top{grid-column:1;align-self:end}
+  .metric:first-child .metric-value{grid-column:2;grid-row:1 / span 2;font-size:28px;justify-self:end}
+  .metric:first-child .metric-foot{grid-column:1;align-self:start;margin:0}
+  .metric:not(:first-child) .metric-value{font-size:20px;line-height:1.1;margin:2px 0}
+  .metric-top{font-size:12px}
+  .metric-foot{margin-top:2px;gap:4px;font-size:11px}
+  .metric:not(:first-child) .metric-foot span:first-child{display:none}
+  .cover{font-size:10px;padding:2px 5px}
+  .unit{font-size:11px}
+  .sectionline{margin-bottom:8px}
+  .sectionhead{font-size:11px}
+  .metric .dot{width:7px;height:7px}
+  .statbig{font-size:30px;margin:11px 0 3px}
+  .stat-note{margin-bottom:14px}
+  .chartwrap{margin-top:16px;min-height:220px}
+  #hourlyChart{height:220px}
+}
 </style>
 </head>
 <body>
@@ -125,7 +156,7 @@ input,select,.ghost{min-height:44px}
 </nav>
 <div class="shell" id="app">
 <header class="top"><div class="brand"><div class="logo" aria-hidden="true"><svg width="25" height="25" viewBox="0 0 26 26" fill="none"><path d="M2 15c4-7 7 7 11 0s7-7 11 0" stroke="#153c38" stroke-linecap="round" stroke-width="2.6"/><circle cx="19" cy="7" r="3" fill="#153c38"/></svg></div>Airwise<span style="color:#799b9d;font-weight:400">.</span></div><div style="display:flex;align-items:center;gap:13px;flex-wrap:wrap;justify-content:flex-end"><a href="/pollution" style="border:1px solid #567c70;background:#204036;color:#c8f7dd;padding:10px 13px;border-radius:11px;font-weight:700;font-size:12px;text-decoration:none">Analisi inquinamento ↗</a><div class="micro"><span class="status-dot"></span><span id="freshness">Storico Alexa locale · UTC</span></div></div></header>
-<section class="hero"><div><p class="eyebrow">Il tuo monitor · analisi storica</p><h1>Respira dati.<br><em>Comprendi l'aria.</em></h1><p class="subtitle">Misurazioni aggregate dal tuo Amazon Air Quality Monitor. Elaborate e conservate sul tuo Mac, senza servizi esterni.</p></div>
+<section class="hero"><div><p class="eyebrow">Il tuo monitor · analisi storica</p><h1>Qualità dell'aria <em>indoor.</em></h1><p class="subtitle">Storico del monitor Alexa · misurazioni orarie sul tuo Mac.</p></div>
 <div class="controls"><div class="switcher" role="group" aria-label="Intervallo storico"><button class="pill active" data-days="7">7 giorni</button><button class="pill" data-days="14">14 giorni</button><button class="pill" data-days="30">30 giorni</button></div><button id="older" class="step" aria-label="Vai al periodo precedente">‹</button><div class="period-label" id="dateRange">—</div><button id="newer" class="step" aria-label="Vai al periodo più recente" disabled>›</button></div></section>
 <div id="error" class="error" role="alert"></div>
 <div class="sectionline"><div class="sectionhead">I cinque indicatori</div><div class="micro-small">Media periodo · seleziona per approfondire</div></div>
