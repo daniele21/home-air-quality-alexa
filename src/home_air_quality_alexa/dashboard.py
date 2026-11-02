@@ -28,6 +28,7 @@ CHANNELS = (
 DEFAULT_DB = Path.home() / ".local/share/home-air-quality-alexa/readings.sqlite3"
 STATIC_FILE = Path(__file__).with_name("dashboard.html")
 POLLUTION_FILE = Path(__file__).with_name("pollution.html")
+CONTEXT_FILE = Path(__file__).with_name("context.html")
 ALLOWED_DAYS = (7, 14, 30)
 MAX_OFFSET = 90
 
@@ -215,7 +216,7 @@ def build_dashboard(db: Path, *, days: int = 7, offset: int = 0) -> dict[str, An
     }
 
 
-def _make_handler(db: Path):
+def _make_handler(db: Path, context_db: Path | None = None):
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, format: str, *args: Any) -> None:
             # Avoid access logs containing paths, queries or headers.
@@ -238,10 +239,78 @@ def _make_handler(db: Path):
             self.end_headers()
             self.wfile.write(content)
 
+        def _valid_host(self) -> bool:
+            # Only loopback Host headers (protect against DNS rebinding).
+            host = self.headers.get("Host", "").lower()
+            return host in ("localhost:8766", "127.0.0.1:8766",
+                            "localhost", "127.0.0.1",
+                            f"localhost:{self.server.server_port}",
+                            f"127.0.0.1:{self.server.server_port}")
+
+        def _write_json(self, status: int, data: dict[str, Any]) -> None:
+            self._send(status, json.dumps(data, ensure_ascii=False, allow_nan=False).encode("utf-8"),
+                       "application/json; charset=utf-8")
+
+        def do_POST(self) -> None:
+            if not self._valid_host():
+                self._write_json(403, {"error": "Host non autorizzato"})
+                return
+            # Require browser same-origin and JSON; no cross-origin credential
+            # or CSRF-capable form can write into the private journal.
+            expected = {f"http://localhost:{self.server.server_port}",
+                        f"http://127.0.0.1:{self.server.server_port}"}
+            if self.headers.get("Origin", "") not in expected:
+                self._write_json(403, {"error": "Origin non autorizzata"})
+                return
+            if self.headers.get("Content-Type", "").split(";")[0].strip().lower() != "application/json":
+                self._write_json(415, {"error": "Richiesto JSON"})
+                return
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                if not 2 <= length <= 2048:
+                    raise DashboardError("Payload non valido o troppo grande")
+                raw = self.rfile.read(length)
+                payload = json.loads(raw)
+                if not isinstance(payload, dict):
+                    raise DashboardError("Oggetto JSON obbligatorio")
+                from .pollution_context import (
+                    CONTEXT_DB, add_activity, delete_activity, sync_outdoor,
+                )
+                target = context_db or CONTEXT_DB
+                route = urlparse(self.path).path
+                if route == "/api/context/activity":
+                    result = add_activity(payload, db=target)
+                    self._write_json(201, {"status": "ok", "activity": result})
+                elif route == "/api/context/delete":
+                    if set(payload) != {"id"}:
+                        raise DashboardError("Identificativo obbligatorio")
+                    removed = delete_activity(payload["id"], db=target)
+                    self._write_json(200, {"status": "ok", "deleted": removed})
+                elif route == "/api/outdoor/sync":
+                    if set(payload) - {"latitude", "longitude", "days", "offset"}:
+                        raise DashboardError("Parametri outdoor non validi")
+                    days, offset = payload.get("days", 30), payload.get("offset", 0)
+                    if type(days) is not int or type(offset) is not int or days not in ALLOWED_DAYS or not 0 <= offset <= MAX_OFFSET:
+                        raise DashboardError("Periodo di sincronizzazione non valido")
+                    meta = build_dashboard(db, days=days, offset=offset)
+                    from datetime import date
+                    result = sync_outdoor(
+                        date.fromisoformat(meta["start_date_utc"]),
+                        date.fromisoformat(meta["end_date_utc_exclusive"]),
+                        db=target, latitude=payload.get("latitude"),
+                        longitude=payload.get("longitude"))
+                    self._write_json(200, result)
+                else:
+                    self._write_json(404, {"error": "Endpoint non esistente"})
+            except (ValueError, DashboardError) as exc:
+                text = str(exc) if isinstance(exc, DashboardError) else "JSON non valido"
+                self._write_json(400, {"error": text})
+            except (OSError, sqlite3.Error):
+                self._write_json(503, {"error": "Archivio locale momentaneamente non disponibile"})
+
         def do_GET(self) -> None:
             # Prevent DNS rebinding onto a local-only service.
-            host = self.headers.get("Host", "").lower().split(":")[0]
-            if host not in ("localhost", "127.0.0.1"):
+            if not self._valid_host():
                 self._send(403, b"Forbidden", "text/plain; charset=utf-8")
                 return
             parsed = urlparse(self.path)
@@ -253,6 +322,14 @@ def _make_handler(db: Path):
                     return
                 self._send(200, content, "text/html; charset=utf-8")
                 return
+            if parsed.path == "/context":
+                try:
+                    content = CONTEXT_FILE.read_bytes()
+                except OSError:
+                    self._send(503, b"Context view not installed", "text/plain; charset=utf-8")
+                    return
+                self._send(200, content, "text/html; charset=utf-8")
+                return
             if parsed.path == "/pollution":
                 try:
                     content = POLLUTION_FILE.read_bytes()
@@ -261,7 +338,7 @@ def _make_handler(db: Path):
                     return
                 self._send(200, content, "text/html; charset=utf-8")
                 return
-            if parsed.path in ("/api/dashboard", "/api/pollution"):
+            if parsed.path in ("/api/dashboard", "/api/pollution", "/api/context"):
                 try:
                     params = parse_qs(parsed.query, keep_blank_values=True, strict_parsing=True)
                     if any(key not in ("days", "offset") or len(val) != 1 for key, val in params.items()):
@@ -280,9 +357,13 @@ def _make_handler(db: Path):
                         return
                     if parsed.path == "/api/dashboard":
                         report = build_dashboard(db, days=days, offset=offset)
-                    else:
+                    elif parsed.path == "/api/pollution":
                         from .pollution_analysis import build_pollution
                         report = build_pollution(db, days=days, offset=offset)
+                    else:
+                        from .pollution_context import CONTEXT_DB, context_report
+                        report = context_report(db, days=days, offset=offset,
+                                                db=context_db or CONTEXT_DB)
                     response = json.dumps(report, ensure_ascii=False, allow_nan=False).encode("utf-8")
                     self._send(200, response, "application/json; charset=utf-8")
                 except (ValueError, DashboardError) as exc:
