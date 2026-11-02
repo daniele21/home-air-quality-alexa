@@ -20,6 +20,14 @@ Read `DESIGN.md`, the relevant HTML, the task the user actually wants to do, and
 6. **Critique and simplify**: ask whether the screen could belong to a finance dashboard simply by changing labels. If so, make its air-quality-specific story and uncertainty more visible.
 7. **Hand off** exact components/roles and contrast notes to the mobile-first skill; afterward do visual QA.
 
+## Non-negotiable KPI hierarchy check
+Review each visible summary number before deciding its scale. Ask: does it
+represent the primary user decision, or merely support the chart? At phone
+width, only one primary indicator may receive a 26–30px treatment; secondary
+metrics should be compact (roughly 18–22px) and subordinate to the first
+useful chart. A percentile or coverage number is not automatically a hero.
+Use the specific visual budgets in `DESIGN.md`.
+
 ## Output contract
 Produce (or update): a short `DESIGN.md` section; mobile and desktop hierarchy; tokens; 3 things retained; 3 things eliminated; intended quality gates. Changes must be reviewable against source, not just adjectives.
 
