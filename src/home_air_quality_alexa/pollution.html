@@ -144,7 +144,7 @@ input,select,.ghost{min-height:44px}
 <div class="sec" id="ritmi">02 / Quando succede</div>
 <div class="grid"><section class="panel"><div class="selectline"><div><h2>Profilo delle 24 ore</h2><p class="desc">Media per ora locale italiana (Europe/Rome), considerando il cambio fra ora legale e solare.</p></div><select id="channel" aria-label="Indicatore dei ritmi"><option value="PM25">PM2.5</option><option value="VOC">VOC</option><option value="CO">CO</option><option value="Humidity">Umidità</option><option value="Air Quality">Indice Alexa</option></select></div><div class="chart-wrap"><canvas id="diurnal" aria-label="Medie per ora del giorno"></canvas><div class="tip" id="diurnalTip"></div></div><div class="legend">I valori delle diverse grandezze non vengono normalizzati o sommati.</div><details class="aw-data-details"><summary>Valori delle 24 ore in tabella</summary><div class="aw-table-scroll"><table><thead><tr><th scope="col">Ora locale</th><th scope="col">Media</th><th scope="col">Campioni</th></tr></thead><tbody id="diurnalTable"></tbody></table></div></details></section>
 <section class="panel"><h2>Giorni della settimana</h2><p class="desc">Media per giorno locale, senza attribuire cause alle differenze.</p><div class="weekday" id="weekdays"></div><div class="note" id="sampleInfo">Ogni media va letta insieme al numero di osservazioni disponibili.</div></section></div>
-<section class="panel"><h2>Heatmap: giorni × ore</h2><p class="desc">Ogni cella mostra la media del sensore selezionato per quell’ora locale nel giorno della settimana. Il colore riflette solo il minimo e il massimo osservati nel periodo, non livelli sanitari.</p><div class="aw-heatmap-scroll" tabindex="0" role="region" aria-label="Scorri lateralmente la heatmap delle 24 ore"><div class="heatmap" id="heatmap" role="img" aria-label="Pattern per ora e giorno della settimana"></div></div><div class="heatlabel"><span>Lunedì · 00:00</span><span>Ogni riga = 1 giorno, 24 colonne = ore locali</span><span>Domenica · 23:00</span></div></section>
+<section class="panel"><h2>Heatmap: giorni × ore</h2><p class="desc">Ogni cella mostra la media del sensore selezionato per quell’ora locale nel giorno della settimana. Il colore riflette solo il minimo e il massimo osservati nel periodo, non livelli sanitari.</p><div class="aw-heatmap-scroll" tabindex="0" role="region" aria-label="Scorri lateralmente la heatmap delle 24 ore"><div class="heatmap" id="heatmap" role="img" aria-label="Pattern per ora e giorno della settimana"></div></div><div class="heatlabel"><span>Lunedì · 00:00</span><span>Ogni riga = 1 giorno, 24 colonne = ore locali</span><span>Domenica · 23:00</span></div><details class="aw-data-details"><summary>Heatmap in tabella: 7 giorni × 24 ore</summary><div class="aw-table-scroll" role="region" tabindex="0" aria-label="Valori medi e campioni della heatmap"><table><caption>Medie per giorno e ora locale; ogni cella contiene media e ore osservate</caption><thead id="heatmapTableHead"></thead><tbody id="heatmapTableBody"></tbody></table></div></details></section>
 
 <div class="sec" id="relazioni">03 / Come cambiano insieme</div>
 <div class="grid"><section class="panel"><h2>Associazioni con PM2.5</h2><p class="desc">Coefficiente di Pearson sulle stesse ore UTC registrate da entrambi i sensori. Disponibile con almeno 48 coppie e variazione sufficiente. Non misura causalità.</p><div id="relations"></div></section>
@@ -213,6 +213,20 @@ function renderPatterns(){
  const all=groups.flat().map(p=>p.mean).filter(v=>v!==null&&Number.isFinite(v));
  const low=all.length?Math.min(...all):0, high=all.length?Math.max(...all):1;
  qs("heatmap").replaceChildren();
+ const heatHead=qs("heatmapTableHead");heatHead.replaceChildren();
+ const hrow=document.createElement("tr");
+ const corner=document.createElement("th");corner.scope="col";corner.textContent="Giorno";hrow.append(corner);
+ for(let hour=0;hour<24;hour++){const th=document.createElement("th");th.scope="col";th.textContent=String(hour).padStart(2,"0")+":00";hrow.append(th)}
+ heatHead.append(hrow);
+ const heatBody=qs("heatmapTableBody");heatBody.replaceChildren();
+ const weekdayNames=["Lun","Mar","Mer","Gio","Ven","Sab","Dom"];
+ groups.forEach((line,weekday)=>{
+   const row=document.createElement("tr"),heading=document.createElement("th");
+   heading.scope="row";heading.textContent=weekdayNames[weekday]||String(weekday);
+   row.append(heading);
+   for(const cell of line){const td=document.createElement("td");td.textContent=fmt(cell.mean,2)+" "+unit+" · "+cell.sample_count+" ore";row.append(td)}
+   heatBody.append(row);
+ });
  groups.forEach((line,weekday)=>{
    line.forEach((cell,hour)=>{
      const x=document.createElement("div");x.className="heatcell";
