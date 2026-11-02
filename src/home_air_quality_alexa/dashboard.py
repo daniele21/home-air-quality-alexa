@@ -268,6 +268,16 @@ def _make_handler(db: Path):
                         raise DashboardError("Parametri API non validi")
                     days = int(params.get("days", ["7"])[0])
                     offset = int(params.get("offset", ["0"])[0])
+                    # Reject unsupported windows immediately, before database
+                    # queries or statistical functions. The API always emits a
+                    # bounded JSON response for these invalid parameter values.
+                    if days not in ALLOWED_DAYS or not 0 <= offset <= MAX_OFFSET:
+                        self._send(
+                            400,
+                            b'{"error":"Periodo o offset non supportato"}',
+                            "application/json; charset=utf-8",
+                        )
+                        return
                     if parsed.path == "/api/dashboard":
                         report = build_dashboard(db, days=days, offset=offset)
                     else:
