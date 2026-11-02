@@ -20,4 +20,4 @@ air-quality-alexa = "home_air_quality_alexa.collector:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-home_air_quality_alexa = ["dashboard.html", "pollution.html"]
+home_air_quality_alexa = ["dashboard.html", "pollution.html", "context.html"]
