@@ -74,6 +74,10 @@ GEOMETRY=r"""(() => {
     headings:document.querySelectorAll('h1').length,
     nonEmptyApp:!!document.querySelector('[data-days].active'),
     rangeReady:!['','—'].includes(document.querySelector('#dateRange,#range')?.textContent?.trim()),
+    periodButtons:document.querySelectorAll('[data-days]').length,
+    pressedPeriodButtons:document.querySelectorAll('[data-days][aria-pressed="true"]').length,
+    missingPressedState:document.querySelectorAll('[data-days]:not([aria-pressed])').length,
+    heatmapTablePopulated:!document.getElementById('heatmapTableBody')||document.querySelectorAll('#heatmapTableBody tr').length===7,
     fixedNavOverlap:!!bottom&&!!mainRect&&bottom.top<0
   };
 })()"""
@@ -143,6 +147,10 @@ async def main():
                                 issues.append(f"{name}:{width}x@{scale}:navigation")
                             if m["headings"]!=1 or m["dataTables"]<1:
                                 issues.append(f"{name}:{width}x@{scale}:landmarks")
+                            if m["periodButtons"]!=3 or m["pressedPeriodButtons"]!=1 or m["missingPressedState"]!=0:
+                                issues.append(f"{name}:{width}x@{scale}:period_accessible_state")
+                            if not m["heatmapTablePopulated"]:
+                                issues.append(f"{name}:{width}x@{scale}:heatmap_table_missing")
                             if scale==1 and m["smallActions"]:
                                 issues.append(f"{name}:{width}x@{scale}:small_targets={m['smallActions']}")
                             if scale==1:
