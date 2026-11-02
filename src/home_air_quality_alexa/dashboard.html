@@ -149,6 +149,32 @@ input,select,.ghost{min-height:44px}
   .chartwrap{margin-top:16px;min-height:220px}
   #hourlyChart{height:220px}
 }
+
+/* Evidence-first compact layout, synthetic mobile screenshot review 2026-11-02.
+   Better first-viewport balance without reducing the 44px hit targets. */
+.unit{margin-left:4px}
+@media(max-width:760px){
+  .top{margin-bottom:12px!important}
+  .hero{display:block;gap:0!important}
+  .hero h1{font-size:26px!important;margin-bottom:4px}
+  .hero .subtitle{font-size:12px}
+  .controls{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:5px 8px;margin-top:12px;width:100%;justify-content:stretch}
+  .controls .switcher{grid-column:1 / -1;grid-row:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;padding:3px}
+  .controls .pill{min-height:44px!important}
+  .controls #older{grid-column:1;grid-row:2}
+  .controls .period-label{grid-column:2;grid-row:2;align-self:center;min-width:0}
+  .controls #newer{grid-column:3;grid-row:2}
+  .sectionline .micro-small{display:none}
+  .sectionline{margin-top:7px}
+  .sectionhead{letter-spacing:.06em}
+  .metrics{margin-bottom:9px}
+  .secondary-metrics{padding-bottom:4px}
+  .secondary-metrics .metric{min-height:74px;padding:9px 11px}
+  .secondary-metrics .metric .cover{padding:1px 4px}
+  .panel .panel-sub{font-size:12px;line-height:1.4;margin-top:5px}
+  .content .panel{padding:17px}
+  .chartwrap{margin-top:9px}
+}
 </style>
 </head>
 <body>
@@ -162,11 +188,11 @@ input,select,.ghost{min-height:44px}
 <section class="hero"><div><p class="eyebrow">Il tuo monitor · analisi storica</p><h1>Qualità dell'aria <em>indoor.</em></h1><p class="subtitle">Storico del monitor Alexa · misurazioni orarie sul tuo Mac.</p></div>
 <div class="controls"><div class="switcher" role="group" aria-label="Intervallo storico"><button class="pill active" data-days="7">7 giorni</button><button class="pill" data-days="14">14 giorni</button><button class="pill" data-days="30">30 giorni</button></div><button id="older" class="step" aria-label="Vai al periodo precedente">‹</button><div class="period-label" id="dateRange">—</div><button id="newer" class="step" aria-label="Vai al periodo più recente" disabled>›</button></div></section>
 <div id="error" class="error" role="alert"></div>
-<div class="sectionline"><div class="sectionhead">I cinque indicatori</div><div class="micro-small">Media periodo · seleziona per approfondire</div></div>
+<div class="sectionline"><div class="sectionhead">Sensori · medie del periodo</div><div class="micro-small">Seleziona un indicatore</div></div>
 <section class="metrics" id="metrics" aria-label="Sensori monitorati"><div class="loading">Caricamento misure locali…</div></section>
 <div class="content">
 <section class="panel" aria-labelledby="titleTrend">
-<div class="rowhead"><div><h2 class="panel-title" id="titleTrend">Andamento orario</h2><p class="panel-sub" id="hourlySub">Misurazioni orarie effettive, senza interpolare i dati mancanti</p></div><span class="accent-legend"><span class="curve-dot" id="selectedDot"></span><span id="selectedUnit">—</span></span></div>
+<div class="rowhead"><div><h2 class="panel-title" id="titleTrend">Andamento orario</h2><p class="panel-sub" id="hourlySub">Serie oraria · dati mancanti non interpolati</p></div><span class="accent-legend"><span class="curve-dot" id="selectedDot"></span><span id="selectedUnit">—</span></span></div>
 <div class="chartwrap" id="hourlyWrap"><canvas id="hourlyChart" role="img" aria-label="Grafico delle misurazioni orarie"></canvas><div class="tip" id="hourTip"></div></div>
 <div class="xfoot"><span id="xStart">—</span><span>Orario UTC</span><span id="xEnd">—</span></div>
 <div class="legend"><span><i></i>Valore misurato</span><span>Gli intervalli vuoti restano vuoti</span></div><details class="aw-data-details"><summary>Valori orari in tabella (anche da tastiera)</summary><div class="aw-table-scroll"><table><thead><tr><th scope="col">Ora UTC</th><th scope="col">Valore</th></tr></thead><tbody id="hourlyTable"></tbody></table></div></details>
