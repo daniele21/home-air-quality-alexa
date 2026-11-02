@@ -252,7 +252,7 @@ function current(){return report?.channels.find(x=>x.key===selected)||report?.ch
 function compareRange(){let end=new Date(report.end_date_utc_exclusive+"T00:00:00Z");end.setUTCDate(end.getUTCDate()-1);return fmtDate(report.start_date_utc)+" – "+fmtDate(end.toISOString().slice(0,10));}
 async function load(){
   byId("error").style.display="none";
-  document.querySelectorAll("[data-days]").forEach(b=>b.classList.toggle("active",Number(b.dataset.days)===days));
+  document.querySelectorAll("[data-days]").forEach(b=>{const active=Number(b.dataset.days)===days;b.classList.toggle("active",active);b.setAttribute("aria-pressed",String(active));});
   byId("older").disabled=offset>=90;byId("newer").disabled=offset<=0;
   try{
     const response=await fetch("/api/dashboard?days="+days+"&offset="+offset,{cache:"no-store"});
