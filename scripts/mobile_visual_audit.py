@@ -23,10 +23,10 @@ CHROME = (
     Path("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"),
     Path("/Applications/Chromium.app/Contents/MacOS/Chromium"),
 )
-ROOT = Path.home() / "Library/Application Support/Airwise/mobile-qa"
+ROOT = Path(os.environ.get("AIRWISE_VISUAL_OUTPUT_DIR", str(Path.home() / "Library/Application Support/Airwise/mobile-qa")))
 WIDTHS = (320, 375, 390, 768, 1024, 1440)
 PAGES = (("/", "overview"), ("/pollution", "pollution"), ("/context", "context"))
-PORT = 8766
+PORT = int(os.environ.get("AIRWISE_VISUAL_PORT", "8766"))
 
 
 class VisualAuditError(Exception):
