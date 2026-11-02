@@ -45,6 +45,41 @@ Typography: system sans, no remote fonts. Body **16px** on mobile (readable at d
 
 Mobile navigation: three clear destinations, with persistent bottom navigation at narrow widths; retain meaningful document links for keyboard/desktop users. No unlabeled icon-only action.
 
+## KPI density and visual weight — reviewed 2026-11-02
+
+The previous UI and illustrative phone mock presented 4–5 KPI cards as equally
+large, with numbers up to 39px on mobile. This violates the declared
+**observatory / evidence-first** hierarchy: repeated big numbers push graphs and
+interpretation below the fold. A responsive layout can be geometrically sound
+and still be poorly prioritized.
+
+**New visual budget at 320–390px:**
+- One prominent **PM2.5 summary** on Overview (up to 28px numeral; ~85px
+  card), always labelled as a period *average*, with source/coverage.
+- Four secondary sensor metrics are **20px numerals** in compact two-column
+  cells (~72px minimum card), not four simultaneous hero KPIs. Their units
+  remain readable and no sensor value is color-coded as safe/unsafe.
+- In Pollution, mediana, p90, episode count and coverage all use **~21px
+  numerals** in ~84px two-column cards. The daily PM2.5 chart has higher
+  visual priority. The p90 statistic is a relative percentile, not a hazard
+  threshold.
+- In Context, paired hours, indoor mean, and modelled outdoor mean are
+  **~19px** compact supporting cells; the paired-line comparison is primary,
+  with data provenance obvious.
+- Mobile analytical headings generally **28px**, not giant marketing hero
+  slogans. Reserve ~32px or more for a truly actionable primary state,
+  not decorative statistics.
+
+Use **information priority**, never font size alone, to emphasize content:
+measurement + unit + interval + source + coverage are a *group*. Avoid
+rendering a solitary bold numeral as a diagnosis or alarm. The chart and
+its evidence should enter the viewport without excessive scrolling.
+
+**Design QA gate:** check the vertical position of the first useful chart,
+not only body overflow and hit-target size. In particular, compare
+320/375/390px screenshot crops and whether the first 1–2 phone screens
+answer "what happened and when?" Document if that condition fails.
+
 ## Composition
 
 - Mobile 320–599px: one column, `padding-inline: 16px`, smaller title, native vertical scroll, no page-wide horizontal overflow. Only individual *optional* data rails or heatmaps may scroll sideways, with visible affordances.
