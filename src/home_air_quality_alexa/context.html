@@ -40,9 +40,25 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
 
 /* Ensure input widgets and secondary actions remain touch-sized on tablet/desktop. */
 input,select,.ghost{min-height:44px}
+
+/* Data-proportional context summary; keep comparison as the main task. */
+.card strong{font-variant-numeric:tabular-nums}
+@media(max-width:760px){
+ .header h1{font-size:28px!important;letter-spacing:-.045em}
+ .header .sub{font-size:12px;line-height:1.5;margin-top:7px}
+ .header{margin-bottom:13px!important}
+ .section{margin:18px 0 10px}
+ .cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:7px;margin:14px 0}
+ .card,.card:first-child{grid-column:auto;padding:10px 8px;min-width:0;border-radius:12px}
+ .card label{font-size:11px;line-height:1.25;min-height:28px;margin:0 0 4px}
+ .card strong{font-size:19px;line-height:1.1}
+ .card small{font-size:10px;line-height:1.25;display:block;margin-top:4px}
+ .panel{padding:16px}
+ .chart{margin-top:13px}
+}
 </style></head><body><nav class="aw-nav" aria-label="Navigazione principale Airwise"><a href="/">Panoramica</a><a href="/pollution">Inquinamento</a><a href="/context" aria-current="page">Diario e outdoor</a></nav><main class="app">
 <nav><div class="brand">Airwise<b>.</b> <span style="color:#9cbbc1;font-size:11px;letter-spacing:0;font-weight:500">/ Contesto</span></div><div class="navlinks"><a href="/">Panoramica</a><a href="/pollution">Analisi inquinamento</a></div></nav>
-<section class="header"><div><div class="eyebrow">Il perché dei tuoi pattern · ipotesi verificabili</div><h1>La tua aria.<br><em>Nel suo contesto.</em></h1><p class="sub">Annota le attività domestiche e confronta le particelle indoor con le stime outdoor. Nessun algoritmo attribuisce automaticamente la causa dei picchi.</p></div><div class="ctrl"><div class="switch"><button data-days="7" class="choice">7 giorni</button><button data-days="14" class="choice">14 giorni</button><button data-days="30" class="choice active">30 giorni</button></div><button id="older" class="arrow" aria-label="Periodo precedente">‹</button><span id="range" class="period">—</span><button id="newer" class="arrow" aria-label="Periodo successivo" disabled>›</button></div></section>
+<section class="header"><div><div class="eyebrow">Il perché dei tuoi pattern · ipotesi verificabili</div><h1>Contesto <em>domestico.</em></h1><p class="sub">Confronta PM2.5 indoor ed esterno, e annota le attività che potrebbero coincidere con i picchi.</p></div><div class="ctrl"><div class="switch"><button data-days="7" class="choice">7 giorni</button><button data-days="14" class="choice">14 giorni</button><button data-days="30" class="choice active">30 giorni</button></div><button id="older" class="arrow" aria-label="Periodo precedente">‹</button><span id="range" class="period">—</span><button id="newer" class="arrow" aria-label="Periodo successivo" disabled>›</button></div></section>
 <div id="error" class="error" role="alert"></div><div id="success" class="success" role="status"></div>
 <div class="section">01 / Inquinamento dentro e fuori casa</div>
 <div class="grid"><section class="panel"><h2>PM2.5 · Indoor vs modello esterno</h2><p class="meta">Confrontiamo soltanto ore UTC presenti in entrambe le serie. La misura indoor Alexa è un aggregato orario; il dato esterno è una stima CAMS di griglia tramite Open-Meteo.</p><div class="cards">
