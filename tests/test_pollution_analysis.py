@@ -172,6 +172,37 @@ class PollutionDatabaseTests(unittest.TestCase):
         with self.assertRaisesRegex(DashboardError, "più monitor"):
             build_pollution(self.db, days=30)
 
+    def test_real_loopback_http_accepts_valid_and_rejects_invalid(self):
+        from http.server import ThreadingHTTPServer
+        from threading import Thread
+        from urllib.request import build_opener, ProxyHandler, Request
+        from urllib.error import HTTPError
+        server = ThreadingHTTPServer(("127.0.0.1", 0), _make_handler(self.db))
+        thread = Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        root = f"http://127.0.0.1:{server.server_port}"
+        open_direct = build_opener(ProxyHandler({})).open
+        try:
+            with open_direct(root + "/api/pollution?days=30", timeout=8) as response:
+                self.assertEqual(response.status, 200)
+                self.assertIn(b'"pm25"', response.read())
+            for path in (
+                "/api/pollution?days=5",
+                "/api/pollution?days=7&offset=999",
+                "/api/dashboard?days=5",
+            ):
+                with self.subTest(path=path):
+                    with self.assertRaises(HTTPError) as caught:
+                        open_direct(root + path, timeout=8)
+                    self.assertEqual(caught.exception.code, 400)
+            with self.assertRaises(HTTPError) as caught:
+                open_direct(Request(root + "/", headers={"Host":"wrong.host"}), timeout=8)
+            self.assertEqual(caught.exception.code, 403)
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=5)
+
     def test_website_files_and_offline_ui(self):
         self.assertTrue(POLLUTION_FILE.is_file())
         html = POLLUTION_FILE.read_text("utf-8")
