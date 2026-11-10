@@ -634,3 +634,41 @@ No Amazon credentials are required for unit tests. **Live API testing must be do
 - `session initialization failed`: Amazon returned a registration but the library could not complete cookies/capabilities; a successful device reading is still unverified.
 
 This collector does not automate a Google sign-in. Google authentication (if offered) happens on Amazon's browser page, never inside the Python collector.
+
+
+## Daily historical sync repair (November 2026)
+
+The daily five-sensor Airwise history sync on the private Mac mini failed on
+November 6–10 with `CannotRetrieveData`. A read-only private probe confirmed
+`login_mode_stored_data` succeeded, but the generic
+`get_devices_data()` call failed with **HTTP 429** in
+`get_communication_preferences()` *before* any AQM history request.
+
+The history-only path now uses `history_discovery.discover_history_devices()`:
+a bounded `update_devices()` + `full_sensor_sync()` to obtain the real
+monitor endpoint and sensor interfaces. It does not call the unrelated
+communications, notifications, music, routines or to-do endpoints. An
+unexpected upstream interface fails closed rather than trying those endpoints.
+
+The `aioamazondevices` dependency is pinned to `17.2.11`, which also skips
+communications requests for AQM devices. This change requires both a hosted
+dependency-pinned test run and a **private Mac live canary** before the scheduled
+workflow's exact source commit is changed.
+
+On the Mac, keep the current working environment and private database untouched
+during the canary. Use an isolated virtual environment for the new source,
+and first call `history-fetch --probe-only` for a single recent UTC day.
+Only after a valid verified PM25 identity/data result should you run a bounded,
+sequential five-channel `history-backfill --apply` for the missing days.
+
+Safety rules:
+
+- Keep the Amazon session at `~/.config/home-air-quality-alexa/amazon-login.json`;
+  never copy it to GitHub, Actions artifacts, or a hosted CI runner.
+- Keep `readings.sqlite3` on the Mac; historical rows are deduplicated by
+  device, sensor, resolution and UTC timestamp.
+- Preserve the existing legacy rolling-window readings. Check completeness via
+  `historical_hourly_utc` and treat empty Amazon buckets as missing, not zero.
+- Stop on HTTP 429 or unexpected identities. Don't retry in a tight loop.
+- Deploy the daily sync with a pinned, reviewed source commit; retain a way to
+  revert to the previous SHA, and validate the day-by-day sensor coverage.
