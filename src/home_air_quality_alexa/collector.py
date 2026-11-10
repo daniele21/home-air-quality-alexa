@@ -242,7 +242,14 @@ async def amazon_command(args: argparse.Namespace) -> int:
                 result = await inspect_history_queries(api)
                 print(json.dumps(result, ensure_ascii=False, indent=2))
                 return 0 if result["status"] in ("metadata_available", "partial_metadata") else 4
-            devices = await api.get_devices_data()
+            if args.command in ("history-fetch", "history-backfill"):
+                # History needs endpoint + sensor identities only. The generic
+                # get_devices_data() also calls communications preferences and
+                # unrelated services that can return HTTP 429, blocking AQM.
+                from .history_discovery import discover_history_devices
+                devices = await discover_history_devices(api)
+            else:
+                devices = await api.get_devices_data()
             if args.command == "history-fetch":
                 from .history_fetch import run_history_fetch
 
