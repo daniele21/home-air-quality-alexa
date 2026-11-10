@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0a111b">
+<title>Airwise · Lo storico della tua aria</title>
+<style>
+:root{--bg:#0a111b;--panel:#111d2a;--panel2:#142333;--edge:#2a3b4d;--text:#f2f6f9;--muted:#9eafc0;--mint:#91e6bc;--shadow:0 20px 60px rgba(0,0,0,.17);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,system-ui,sans-serif;color:var(--text);font-synthesis:none}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse 90% 500px at 70% -160px,#203b4c 0,transparent 85%),var(--bg)}
+button{font:inherit;cursor:pointer}button:focus-visible{outline:2px solid #d2fce4;outline-offset:3px}
+.shell{max-width:1260px;padding:34px 36px 65px;margin:auto}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:46px}
+.brand{display:flex;align-items:center;gap:13px;letter-spacing:-.055em;font-size:22px;font-weight:780}
+.logo{display:flex;align-items:center;justify-content:center;background:#b5f3d2;border-radius:15px;color:#102a28;width:42px;height:42px;box-shadow:0 7px 25px rgba(130,230,180,.14)}
+.micro{display:flex;align-items:center;gap:9px;color:var(--muted);font-size:12px;font-weight:600;letter-spacing:.02em}
+.status-dot{width:7px;height:7px;border-radius:100%;background:#88deb0;box-shadow:0 0 0 5px rgba(136,222,176,.12)}
+.hero{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:33px}
+.eyebrow{color:#9ad8bc;letter-spacing:.17em;font-size:11px;font-weight:800;text-transform:uppercase;margin:0 0 14px}
+h1{font-size:clamp(35px,4.5vw,62px);line-height:1.055;letter-spacing:-.065em;margin:0 0 17px;font-weight:740;max-width:700px}
+h1 em{font-style:normal;color:#a6e5c2}
+.subtitle{margin:0;color:var(--muted);font-size:14px;line-height:1.65}
+.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.switcher{background:#14212e;border:1px solid #2d3c4d;border-radius:12px;padding:4px;display:flex;gap:3px}
+.pill{border:0;background:transparent;color:#a5b6c3;border-radius:9px;padding:9px 13px;font-weight:700;font-size:12px}
+.pill.active{background:#e1f6e9;color:#143229;box-shadow:0 2px 7px #0003}
+.step{height:38px;width:38px;display:grid;place-items:center;background:#172536;color:#d0dbe6;border:1px solid var(--edge);border-radius:12px;font-size:19px}
+.step:disabled{opacity:.3;cursor:default}
+.period-label{font-size:12px;color:#bfd2de;min-width:114px;text-align:center}
+.sectionline{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:13px}
+.sectionhead{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#a6b6c4;font-weight:800}
+.micro-small{font-size:11px;color:#778b9b}
+.metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:22px}
+.metric{color:var(--text);text-align:left;position:relative;display:flex;flex-direction:column;gap:9px;min-height:165px;min-width:0;padding:20px;border:1px solid #273849;border-radius:19px;background:linear-gradient(150deg,#142333,#0f1b29);transition:transform .2s,border-color .2s,background .2s}
+.metric:hover{transform:translateY(-2px);border-color:#567b7c}
+.metric.selected{border-color:var(--accent);background:linear-gradient(160deg,#1d3240,#12232d);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 26%,transparent)}
+.metric-top{display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:710;color:#dbe5ed}
+.dot{width:9px;height:9px;background:var(--accent);border-radius:50%}
+.metric-value{letter-spacing:-.055em;font-size:clamp(29px,3.3vw,43px);line-height:1.1;font-weight:720;white-space:nowrap}
+.unit{font-size:12px;letter-spacing:0;color:#91a6b8;font-weight:600}
+.metric-foot{display:flex;align-items:center;justify-content:space-between;gap:5px;margin-top:auto;font-size:11px;color:#8b9fae}
+.cover{font-size:10px;font-weight:750;color:#aac3b5;background:#223c3b;padding:5px 7px;border-radius:7px;white-space:nowrap}
+.content{display:grid;grid-template-columns:minmax(0,1.85fr) minmax(300px,1fr);gap:16px;margin-bottom:16px}
+.panel{border:1px solid var(--edge);border-radius:22px;background:linear-gradient(160deg,#132232,#101c29);box-shadow:var(--shadow);padding:25px;min-width:0}
+.panel-title{font-size:19px;font-weight:730;letter-spacing:-.035em;margin:0}
+.panel-sub{font-size:12px;color:#91a6b7;margin:8px 0 0;line-height:1.5}
+.rowhead{display:flex;justify-content:space-between;gap:15px;align-items:flex-start}
+.accent-legend{display:flex;gap:8px;align-items:center;color:#bdcede;font-size:11px;white-space:nowrap}
+.curve-dot{width:10px;height:10px;background:var(--accent);border-radius:50%}
+.chartwrap{position:relative;margin-top:26px;min-height:250px}
+canvas{display:block;width:100%;height:250px;touch-action:pan-y}
+.tip{position:absolute;z-index:5;pointer-events:none;background:#f3f9f5;color:#172e35;border-radius:10px;padding:8px 11px;font-size:11px;line-height:1.6;box-shadow:0 8px 25px #0005;display:none;white-space:nowrap}
+.xfoot{display:flex;justify-content:space-between;font-size:11px;color:#738a9e;margin-top:8px}
+.legend{display:flex;gap:17px;align-items:center;font-size:11px;color:#94aabb;margin-top:20px;flex-wrap:wrap}
+.legend i{display:inline-block;width:16px;height:3px;margin-right:7px;vertical-align:middle;background:var(--accent)}
+.legend i.prev{background:#6d8190}
+.statbig{font-size:44px;font-weight:730;letter-spacing:-.06em;line-height:1.12;margin:22px 0 6px}
+.stat-note{color:#96afbf;font-size:12px;margin:0 0 24px}
+.progress{height:8px;background:#29394a;border-radius:100px;overflow:hidden;margin:14px 0 9px}
+.progress span{height:100%;display:block;background:linear-gradient(90deg,#61bf9e,#b5f5c8);border-radius:100px;transition:width .5s}
+.bigcompare{display:flex;justify-content:space-between;align-items:center;gap:9px;padding:16px 0;border-top:1px solid #2b3c4c}
+.bigcompare strong{font-size:18px;letter-spacing:-.035em}
+.bigcompare .label{color:#9eb3c4;font-size:12px}
+.notice{background:#172b38;border:1px solid #314957;border-radius:13px;padding:13px 15px;font-size:11px;line-height:1.65;color:#a9becc;margin-top:10px}
+.lower{display:grid;grid-template-columns:minmax(0,1.85fr) minmax(300px,1fr);gap:16px}
+.lower .panel{min-height:270px}
+.chart-small canvas{height:170px}.chart-small{margin-top:25px;min-height:170px}
+.day-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:9px;margin-top:23px}
+.day-cell{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}
+.day-bar{width:100%;height:24px;border:1px solid #304452;border-radius:7px;background:#243745;overflow:hidden;display:flex}
+.day-bar span{display:block;background:#86dfb5;height:100%}
+.day-label{font-size:10px;color:#8197a9;white-space:nowrap}
+.footnote{margin-top:23px;border-top:1px solid #203040;padding-top:20px;font-size:11px;color:#70869b;display:flex;flex-wrap:wrap;gap:9px;justify-content:space-between;line-height:1.65}
+.error{display:none;background:#34252a;border:1px solid #7a4249;color:#f8c4c7;padding:18px;border-radius:13px;margin:25px 0}
+.loading{height:225px;display:grid;place-items:center;color:#b0c5d2}
+@media(max-width:1100px){.metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.metric{min-height:148px}.content,.lower{grid-template-columns:minmax(0,1.4fr) minmax(285px,1fr)}}
+@media(max-width:760px){.shell{padding:21px 17px 38px}.top{margin-bottom:28px}.hero{flex-direction:column;align-items:stretch}.controls{justify-content:flex-start}.metrics{display:flex;overflow-x:auto;padding:0 0 9px;margin-right:-17px;scroll-snap-type:x mandatory}.metric{flex:0 0 160px;min-height:148px;padding:17px;scroll-snap-align:start}.metric-value{font-size:31px}.content,.lower{grid-template-columns:minmax(0,1fr)}.panel{padding:20px}.top .micro{font-size:10px}.chartwrap{margin-top:17px}.panel-title{font-size:17px}.hero{margin-bottom:26px}.xfoot{font-size:10px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none!important}}
+
+/* Airwise original mobile-first design pass: see DESIGN.md and local agent skills. */
+:root{--aq-background:#0b121b;--aq-surface:#142534;--aq-border:#334b58;--aq-text:#f2faf7;--aq-muted:#b6c7d0;--aq-indoor:#9ce8c2;--aq-outdoor:#f0c58e;--aq-note:#d6b3f2;--aq-focus:#b6f6d4;--aq-touch-target:44px}
+.aw-nav{max-width:1240px;margin:10px auto 0;padding:0 34px;display:flex;justify-content:flex-end;gap:9px}
+.aw-nav a{display:flex;align-items:center;justify-content:center;min-height:44px;padding:10px 15px;border:1px solid #37515a;border-radius:12px;color:#cbdde2;text-decoration:none;font-size:14px;font-weight:650;white-space:nowrap}
+.aw-nav a[aria-current="page"]{color:#112e26;background:#b7f1d1;border-color:#b7f1d1}
+.aw-nav a:focus-visible{outline:3px solid var(--aq-focus);outline-offset:3px}
+.step,.arrow{width:44px!important;height:44px!important;min-width:44px}
+.pill,.choice{min-height:44px!important;padding-inline:13px!important}
+.metric,.ghost,.action{min-height:44px}
+button,select,input{touch-action:manipulation}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--aq-focus);outline-offset:3px}
+.aw-data-details{margin-top:16px;border:1px solid #37515a;border-radius:12px;background:#162936;padding:12px 14px}
+.aw-data-details summary{cursor:pointer;color:#cce9dd;font-weight:650;font-size:14px;min-height:44px;display:flex;align-items:center}
+.aw-table-scroll{overflow-x:auto;overscroll-behavior-inline:contain}
+.aw-data-details table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+.aw-data-details th,.aw-data-details td{padding:9px;text-align:left;border-bottom:1px solid #37515a;white-space:nowrap}
+.aw-data-details th{color:#b6c7d0}
+.aw-nav~.shell,.aw-nav~.app{min-width:0}
+@media(max-width:760px){
+  .aw-nav{position:fixed;z-index:50;bottom:0;left:0;right:0;margin:0;padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));width:100%;max-width:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;background:#0d1c29f7;border-top:1px solid #38535e;box-shadow:0 -10px 34px #0004;backdrop-filter:blur(14px)}
+  .aw-nav a{white-space:normal;text-align:center;line-height:1.22;font-size:12px;padding:8px 3px;min-height:48px}
+  .shell,.app{padding-bottom:calc(106px + env(safe-area-inset-bottom,0px))!important}
+  .hero h1,.header h1,h1{font-size:clamp(28px,8vw,36px)!important;line-height:1.12}
+  .hero,.header{gap:14px!important}
+  .eyebrow{margin-bottom:7px!important}
+  .top,.header{margin-bottom:18px!important}
+  .panel-sub,.desc,.meta,.sub,.subtitle{font-size:14px;line-height:1.55}
+  .notice,.hint,.footnote,.disclaimer{font-size:12px}
+  .metrics{scrollbar-width:thin}
+  .aw-nav~.shell .top a[href="/pollution"],.aw-nav~.app .navlinks,.aw-nav~.app nav .back{display:none}
+  .twocol{grid-template-columns:1fr!important}
+  .form input,.form select,select{font-size:16px!important;min-height:44px!important}
+}
+@media(prefers-reduced-motion:reduce){.aw-nav *{animation:none!important;transition:none!important}}
+
+/* Ensure input widgets and secondary actions remain touch-sized on tablet/desktop. */
+input,select,.ghost{min-height:44px}
+
+/* Hierarchy pass: PM2.5 is primary, four secondary sensors are compact.
+   The chart takes precedence over decorative statistics on small screens. */
+.metric-value{font-variant-numeric:tabular-nums}
+.metrics > .metric:first-child{border-color:#42685e}
+.secondary-metrics{grid-column:2 / -1;min-width:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media(max-width:760px){
+  .hero h1{font-size:28px!important;line-height:1.12;letter-spacing:-.045em;margin-bottom:5px}
+  .hero .eyebrow{font-size:10px}
+  .hero .subtitle{font-size:12px;line-height:1.4}
+  .hero{margin-bottom:14px!important}
+  .controls{gap:7px}
+  .metrics{display:flex!important;flex-direction:column;overflow:visible!important;gap:8px;margin:0 0 14px;scroll-snap-type:none}
+  .secondary-metrics{display:grid;grid-column:auto;grid-auto-flow:column;grid-auto-columns:150px;grid-template-columns:none;gap:8px;overflow-x:auto;max-width:100%;padding:0 1px 8px;overscroll-behavior-inline:contain;scrollbar-width:thin}
+  .secondary-metrics .metric{flex:none;min-height:72px}
+  .metric{min-width:0;min-height:72px;gap:3px;padding:10px 12px;border-radius:13px;scroll-snap-align:none}
+  .metrics > .metric:first-child{flex:0 0 auto;grid-column:1 / -1;min-height:85px;padding:13px 15px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:8px}
+  .metrics > .metric:first-child .metric-top{grid-column:1;align-self:end}
+  .metrics > .metric:first-child .metric-value{grid-column:2;grid-row:1 / span 2;font-size:28px;justify-self:end}
+  .metrics > .metric:first-child .metric-foot{grid-column:1;align-self:start;margin:0}
+  .secondary-metrics .metric-value{font-size:20px;line-height:1.1;margin:2px 0}
+  .metric-top{font-size:12px}
+  .metric-foot{margin-top:2px;gap:4px;font-size:11px}
+  .secondary-metrics .metric-foot span:first-child{display:none}
+  .cover{font-size:10px;padding:2px 5px}
+  .unit{font-size:11px}
+  .sectionline{margin-bottom:8px}
+  .sectionhead{font-size:11px}
+  .metric .dot{width:7px;height:7px}
+  .statbig{font-size:30px;margin:11px 0 3px}
+  .stat-note{margin-bottom:14px}
+  .chartwrap{margin-top:16px;min-height:220px}
+  #hourlyChart{height:220px}
+}
+
+/* Evidence-first compact layout, synthetic mobile screenshot review 2026-11-02.
+   Better first-viewport balance without reducing the 44px hit targets. */
+.unit{margin-left:4px}
+@media(max-width:760px){
+  .top{margin-bottom:12px!important}
+  .hero{display:block;gap:0!important}
+  .hero h1{font-size:26px!important;margin-bottom:4px}
+  .hero .subtitle{font-size:12px}
+  .controls{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:5px 8px;margin-top:12px;width:100%;justify-content:stretch}
+  .controls .switcher{grid-column:1 / -1;grid-row:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;padding:3px}
+  .controls .pill{min-height:44px!important}
+  .controls #older{grid-column:1;grid-row:2}
+  .controls .period-label{grid-column:2;grid-row:2;align-self:center;min-width:0}
+  .controls #newer{grid-column:3;grid-row:2}
+  .sectionline .micro-small{display:none}
+  .sectionline{margin-top:7px}
+  .sectionhead{letter-spacing:.06em}
+  .metrics{margin-bottom:9px}
+  .secondary-metrics{padding-bottom:4px;scrollbar-width:none}
+  .secondary-metrics::-webkit-scrollbar{display:none}
+  .secondary-metrics .metric{min-height:74px;padding:9px 11px}
+  .secondary-metrics .metric .cover{padding:1px 4px}
+  .panel .panel-sub{font-size:12px;line-height:1.4;margin-top:5px}
+  .content .panel{padding:17px}
+  .chartwrap{margin-top:9px}
+}
+
+/* Accessibility reflow: 200% zoom needs one-column analytical regions on
+   medium layouts, and a contained optional sensor rail rather than a wider page. */
+.metrics{grid-template-columns:minmax(180px,1fr) minmax(0,4fr)}
+.secondary-metrics{grid-column:2;min-width:0}
+@media(max-width:1100px){
+  .content,.lower{grid-template-columns:minmax(0,1fr)}
+  .metrics{display:flex;flex-direction:column}
+  .metrics > .metric:first-child{flex:none}
+  .secondary-metrics{grid-column:auto;display:grid;grid-auto-flow:column;
+    grid-auto-columns:minmax(135px,1fr);grid-template-columns:none;
+    overflow-x:auto;max-width:100%;overscroll-behavior-inline:contain}
+  .secondary-metrics .metric{min-width:0}
+  .hero{flex-wrap:wrap;min-width:0}
+  .hero>div{min-width:0}
+}
+@media(min-width:1101px){
+  .metrics>.metric:first-child,.secondary-metrics{min-width:0}
+  .secondary-metrics .metric{padding-inline:clamp(10px,1.2vw,18px)}
+  .secondary-metrics .metric-value{font-size:clamp(23px,2.4vw,34px)}
+}
+</style>
+</head>
+<body>
+<nav class="aw-nav" aria-label="Navigazione principale Airwise">
+<a href="/" aria-current="page">Panoramica</a>
+<a href="/pollution">Inquinamento</a>
+<a href="/context">Diario e outdoor</a>
+</nav>
+<div class="shell" id="app">
+<header class="top"><div class="brand"><div class="logo" aria-hidden="true"><svg width="25" height="25" viewBox="0 0 26 26" fill="none"><path d="M2 15c4-7 7 7 11 0s7-7 11 0" stroke="#153c38" stroke-linecap="round" stroke-width="2.6"/><circle cx="19" cy="7" r="3" fill="#153c38"/></svg></div>Airwise<span style="color:#799b9d;font-weight:400">.</span></div><div style="display:flex;align-items:center;gap:13px;flex-wrap:wrap;justify-content:flex-end"><a href="/pollution" style="border:1px solid #567c70;background:#204036;color:#c8f7dd;padding:10px 13px;border-radius:11px;font-weight:700;font-size:12px;text-decoration:none">Analisi inquinamento ↗</a><div class="micro"><span class="status-dot"></span><span id="freshness">Storico Alexa locale · UTC</span></div></div></header>
+<section class="hero"><div><p class="eyebrow">Il tuo monitor · analisi storica</p><h1>Qualità dell'aria <em>indoor.</em></h1><p class="subtitle">Storico del monitor Alexa · misurazioni orarie sul tuo Mac.</p></div>
+<div class="controls"><div class="switcher" role="group" aria-label="Intervallo storico"><button class="pill active" data-days="7">7 giorni</button><button class="pill" data-days="14">14 giorni</button><button class="pill" data-days="30">30 giorni</button></div><button id="older" class="step" aria-label="Vai al periodo precedente">‹</button><div class="period-label" id="dateRange">—</div><button id="newer" class="step" aria-label="Vai al periodo più recente" disabled>›</button></div></section>
+<div id="error" class="error" role="alert"></div>
+<div class="sectionline"><div class="sectionhead">Sensori · medie del periodo</div><div class="micro-small">Seleziona un indicatore</div></div>
+<section class="metrics" id="metrics" aria-label="Sensori monitorati"><div class="loading">Caricamento misure locali…</div></section>
+<div class="content">
+<section class="panel" aria-labelledby="titleTrend">
+<div class="rowhead"><div><h2 class="panel-title" id="titleTrend">Andamento orario</h2><p class="panel-sub" id="hourlySub">Serie oraria · dati mancanti non interpolati</p></div><span class="accent-legend"><span class="curve-dot" id="selectedDot"></span><span id="selectedUnit">—</span></span></div>
+<div class="chartwrap" id="hourlyWrap"><canvas id="hourlyChart" role="img" aria-label="Grafico delle misurazioni orarie"></canvas><div class="tip" id="hourTip"></div></div>
+<div class="xfoot"><span id="xStart">—</span><span>Orario UTC</span><span id="xEnd">—</span></div>
+<div class="legend"><span><i></i>Valore misurato</span><span>Gli intervalli vuoti restano vuoti</span></div><details class="aw-data-details"><summary>Valori orari in tabella (anche da tastiera)</summary><div class="aw-table-scroll"><table><thead><tr><th scope="col">Ora UTC</th><th scope="col">Valore</th></tr></thead><tbody id="hourlyTable"></tbody></table></div></details>
+</section>
+<aside class="panel" aria-label="Sintesi e copertura">
+<div><div class="sectionhead">Copertura dati</div><div class="statbig" id="coverage">—</div><p class="stat-note" id="coverageText">Ore effettivamente registrate nel periodo</p><div class="progress" aria-label="Copertura"><span id="coverageBar" style="width:0%"></span></div><div class="micro-small" id="coverageCounts">—</div></div>
+<div style="margin-top:28px"><div class="sectionhead" style="margin-bottom:9px">Statistiche del periodo</div>
+<div class="bigcompare"><span class="label">Minimo registrato</span><strong id="minVal">—</strong></div>
+<div class="bigcompare"><span class="label">Massimo registrato</span><strong id="maxVal">—</strong></div>
+<div class="bigcompare"><span class="label">Media periodo precedente</span><strong id="prevMean">—</strong></div>
+<div class="bigcompare"><span class="label">Variazione media</span><strong id="deltaVal">—</strong></div>
+</div>
+<div class="notice" id="comparisonNote">Il confronto viene mostrato soltanto quando entrambi i periodi hanno copertura sufficiente.</div>
+</aside>
+</div>
+<div class="lower">
+<section class="panel" aria-labelledby="dailyHeading">
+<div class="rowhead"><div><h2 class="panel-title" id="dailyHeading">Confronto giornaliero</h2><p class="panel-sub">Medie giornaliere: periodo selezionato e periodo precedente</p></div></div>
+<div class="chartwrap chart-small"><canvas id="dailyChart" role="img" aria-label="Grafico delle medie giornaliere sovrapposte"></canvas><div class="tip" id="dailyTip"></div></div>
+<div class="legend"><span><i></i>Periodo selezionato</span><span><i class="prev"></i>Periodo precedente</span></div><details class="aw-data-details"><summary>Medie giornaliere in tabella</summary><div class="aw-table-scroll"><table><thead><tr><th scope="col">Giorno</th><th scope="col">Media attuale</th><th scope="col">Media precedente</th></tr></thead><tbody id="dailyTable"></tbody></table></div></details>
+</section>
+<section class="panel"><h2 class="panel-title">Completezza per giorno</h2><p class="panel-sub">Una barra piena corrisponde alle 24 ore UTC disponibili</p><div class="day-grid" id="dayGrid"></div><div class="notice">La dashboard considera solo le misure archiviate con timestamp allineato all'ora UTC. Le vecchie aggregazioni con offset sono preservate, ma escluse dai grafici per evitare duplicati.</div></section>
+</div>
+<footer class="footnote"><span>Airwise · Analisi in locale · Fuso orario UTC · Nessuna libreria o font esterni</span><span>Valori descrittivi, non soglie di rischio né indicazioni sanitarie.</span></footer>
+</div>
+<script>
+"use strict";
+const colors={"PM25":"#98eac2","VOC":"#c7b4fc","CO":"#f1c889","Humidity":"#89c5f1","Air Quality":"#ffb49f"};
+let days=7,offset=0,selected="PM25",report=null;
+const byId=id=>document.getElementById(id);
+const fmt=(x,d=1)=>x===null||!Number.isFinite(x)?"—":new Intl.NumberFormat("it-IT",{maximumFractionDigits:d}).format(x);
+const fmtDate=s=>new Intl.DateTimeFormat("it-IT",{day:"numeric",month:"short",timeZone:"UTC"}).format(new Date(s+"T00:00:00Z"));
+const dateTime=s=>new Intl.DateTimeFormat("it-IT",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit",timeZone:"UTC"}).format(new Date(s));
+function current(){return report?.channels.find(x=>x.key===selected)||report?.channels[0];}
+function compareRange(){let end=new Date(report.end_date_utc_exclusive+"T00:00:00Z");end.setUTCDate(end.getUTCDate()-1);return fmtDate(report.start_date_utc)+" – "+fmtDate(end.toISOString().slice(0,10));}
+async function load(){
+  byId("error").style.display="none";
+  document.querySelectorAll("[data-days]").forEach(b=>{const active=Number(b.dataset.days)===days;b.classList.toggle("active",active);b.setAttribute("aria-pressed",String(active));});
+  byId("older").disabled=offset>=90;byId("newer").disabled=offset<=0;
+  try{
+    const response=await fetch("/api/dashboard?days="+days+"&offset="+offset,{cache:"no-store"});
+    const data=await response.json();
+    if(!response.ok)throw Error(data.error||"Errore di lettura");
+    report=data;
+    byId("dateRange").textContent=compareRange();
+    byId("freshness").textContent="Ultima lettura: "+dateTime(report.latest_available_hour_utc)+" UTC";
+    draw();
+  }catch(e){
+    byId("error").textContent=e.message||"Impossibile caricare lo storico locale";
+    byId("error").style.display="block";
+    byId("metrics").textContent="Dati non disponibili";
+  }
+}
+function draw(){
+  if(!report)return;
+  byId("metrics").replaceChildren();
+  const secondary=document.createElement("div");secondary.className="secondary-metrics";secondary.setAttribute("role","group");secondary.setAttribute("aria-label","Altri sensori; scorri orizzontalmente su smartphone");
+  for(const ch of report.channels){
+    const btn=document.createElement("button");btn.type="button";btn.className="metric"+(ch.key===selected?" selected":"");
+    btn.style.setProperty("--accent",colors[ch.key]);
+    btn.setAttribute("aria-pressed",ch.key===selected?"true":"false");
+    const top=document.createElement("div");top.className="metric-top";
+    const name=document.createElement("span");name.textContent=ch.label;
+    const dot=document.createElement("span");dot.className="dot";top.append(name,dot);
+    const v=document.createElement("div");v.className="metric-value";v.textContent=fmt(ch.summary.mean);
+    const unit=document.createElement("span");unit.className="unit";unit.textContent=" "+ch.unit;v.append(unit);
+    const foot=document.createElement("div");foot.className="metric-foot";
+    const label=document.createElement("span");label.textContent="Media "+days+"gg";
+    const coverage=document.createElement("span");coverage.className="cover";coverage.textContent=fmt(ch.summary.coverage_pct,0)+"% dati";
+    foot.append(label,coverage);btn.append(top,v,foot);
+    btn.addEventListener("click",()=>{selected=ch.key;draw()});
+    if(ch.key==="PM25")byId("metrics").append(btn);
+    else secondary.append(btn);
+  }
+  byId("metrics").append(secondary);
+  const ch=current();document.documentElement.style.setProperty("--accent",colors[ch.key]);
+  byId("titleTrend").textContent="Andamento orario · "+ch.label;
+  byId("selectedUnit").textContent=ch.unit;
+  byId("coverage").textContent=fmt(ch.summary.coverage_pct,1)+"%";
+  byId("coverageBar").style.width=ch.summary.coverage_pct+"%";
+  byId("coverageCounts").textContent=ch.summary.observed_hours+" su "+ch.summary.expected_hours+" intervalli orari";
+  byId("coverageText").textContent="Ore disponibili · "+compareRange();
+  byId("minVal").textContent=fmt(ch.summary.minimum)+" "+ch.unit;
+  byId("maxVal").textContent=fmt(ch.summary.maximum)+" "+ch.unit;
+  byId("prevMean").textContent=fmt(ch.previous.mean)+" "+ch.unit;
+  byId("deltaVal").textContent=ch.comparison_pct===null?"n.d.":(ch.comparison_pct>0?"+":"")+fmt(ch.comparison_pct)+"%";
+  byId("comparisonNote").textContent=ch.comparison_pct===null?"Dati insufficienti in almeno uno dei due periodi: variazione non calcolabile.":"La variazione descrive il valore medio, non una valutazione di salubrità dell’aria.";
+  byId("xStart").textContent=fmtDate(report.start_date_utc);
+  let end=new Date(report.end_date_utc_exclusive+"T00:00:00Z");end.setUTCDate(end.getUTCDate()-1);
+  byId("xEnd").textContent=fmtDate(end.toISOString().slice(0,10));
+  byId("dayGrid").replaceChildren();
+  ch.daily.forEach(x=>{
+    const box=document.createElement("div");box.className="day-cell";
+    const bar=document.createElement("div");bar.className="day-bar";
+    const fill=document.createElement("span");fill.style.width=Math.round(x.hours/24*100)+"%";
+    const label=document.createElement("div");label.className="day-label";label.textContent=new Date(x.day_utc+"T00:00:00Z").getUTCDate().toString().padStart(2,"0");
+    box.title=x.day_utc+": "+x.hours+"/24 ore";bar.append(fill);box.append(bar,label);byId("dayGrid").append(box);
+  });
+  renderCharts(ch);
+  renderAccessibleTables(ch);
+}
+function renderAccessibleTables(ch){
+  const hourly=byId("hourlyTable");hourly.replaceChildren();
+  // Reuse canonical timestamps and put exact values in semantic HTML.
+  for(const point of ch.hourly){
+    const tr=document.createElement("tr"),time=document.createElement("td"),value=document.createElement("td");
+    time.textContent=dateTime(point.timestamp_utc)+" UTC";
+    value.textContent=fmt(point.value,2)+" "+ch.unit;
+    tr.append(time,value);hourly.append(tr);
+  }
+  const daily=byId("dailyTable");daily.replaceChildren();
+  for(let i=0;i<ch.daily.length;i++){
+    const today=ch.daily[i],before=ch.previous_daily[i];
+    const tr=document.createElement("tr");
+    for(const item of [today.day_utc,fmt(today.mean,2)+" "+ch.unit,fmt(before.mean,2)+" "+ch.unit]){
+      const td=document.createElement("td");td.textContent=item;tr.append(td);
+    }
+    daily.append(tr);
+  }
+}
+function renderCharts(ch){
+  const start=Date.parse(report.start_date_utc+"T00:00:00Z");
+  const map=new Map(ch.hourly.map(p=>[Date.parse(p.timestamp_utc),p.value]));
+  const hourly=Array.from({length:days*24},(_,i)=>{const t=start+i*3600000;return{value:map.get(t)??null,label:dateTime(new Date(t).toISOString())+" UTC"}});
+  drawPlot(byId("hourlyChart"),byId("hourTip"),hourly,null,colors[ch.key],ch.unit,false);
+  const currentDays=ch.daily.map(x=>({value:x.mean,label:fmtDate(x.day_utc)+" · "+x.hours+"/24 ore"}));
+  const previousDays=ch.previous_daily.map(x=>({value:x.mean,label:fmtDate(x.day_utc)+" · "+x.hours+"/24 ore"}));
+  drawPlot(byId("dailyChart"),byId("dailyTip"),currentDays,previousDays,colors[ch.key],ch.unit,true);
+}
+function drawPlot(canvas,tip,points,previous,accent,unit,isDaily){
+  const rect=canvas.getBoundingClientRect(),width=Math.max(250,rect.width),height=isDaily?170:250;
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);
+  const ctx=canvas.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,width,height);
+  const L=43,R=12,T=10,B=23,w=width-L-R,h=height-T-B;
+  const vals=[...points,...(previous||[])].map(x=>x.value).filter(x=>x!==null&&Number.isFinite(x));
+  if(!vals.length){ctx.fillStyle="#8da2b2";ctx.font="12px system-ui";ctx.fillText("Nessun dato nel periodo",L+5,height/2);return;}
+  let min=Math.min(0,...vals),max=Math.max(...vals);if(max===min)max=min+1;
+  const pad=(max-min)*.10;min=Math.max(0,min-pad);max+=pad;
+  const x=i=>L+(points.length<=1?0:i/(points.length-1)*w);
+  const y=v=>T+h-(v-min)/(max-min)*h;
+  ctx.lineWidth=1;ctx.font="10px system-ui";ctx.textBaseline="middle";
+  for(let i=0;i<4;i++){const yy=T+i*h/3,value=max-(max-min)*i/3;
+    ctx.strokeStyle="#293c4a";ctx.beginPath();ctx.moveTo(L,yy);ctx.lineTo(L+w,yy);ctx.stroke();
+    ctx.fillStyle="#8399aa";ctx.textAlign="right";ctx.fillText(fmt(value,1),L-9,yy);
+  }
+  function trace(series,color,fill=false){
+    let started=false;
+    if(fill){
+      const gradient=ctx.createLinearGradient(0,T,0,T+h);
+      gradient.addColorStop(0,color+"28");gradient.addColorStop(1,color+"00");
+      ctx.fillStyle=gradient;
+      let group=[];
+      function flush(){if(group.length<2){group=[];return;}
+        ctx.beginPath();ctx.moveTo(x(group[0][0]),T+h);
+        for(const [i,p] of group)ctx.lineTo(x(i),y(p));
+        ctx.lineTo(x(group[group.length-1][0]),T+h);ctx.closePath();ctx.fill();group=[];}
+      series.forEach((item,i)=>{if(item.value===null){flush()}else group.push([i,item.value])});flush();
+    }
+    ctx.strokeStyle=color;ctx.lineWidth=fill?2.2:1.8;ctx.lineJoin="round";ctx.lineCap="round";ctx.beginPath();
+    series.forEach((item,i)=>{if(item.value===null){started=false;return;}
+      if(!started){ctx.moveTo(x(i),y(item.value));started=true;}else ctx.lineTo(x(i),y(item.value));});
+    ctx.stroke();
+  }
+  if(previous)trace(previous,"#72879c");
+  trace(points,accent,true);
+  canvas.onpointermove=event=>{
+    const bb=canvas.getBoundingClientRect(),pos=event.clientX-bb.left;
+    const index=Math.max(0,Math.min(points.length-1,Math.round((pos-L)/w*(points.length-1))));
+    const cur=points[index],prev=previous?.[index];
+    tip.innerHTML="";
+    const strong=document.createElement("strong");strong.textContent=cur.label;
+    const value=document.createElement("div");value.textContent="Periodo attuale: "+fmt(cur.value)+" "+unit;
+    tip.append(strong,value);
+    if(prev){const p=document.createElement("div");p.textContent="Precedente: "+fmt(prev.value)+" "+unit;tip.append(p);}
+    tip.style.display="block";tip.style.top=Math.max(4,event.clientY-bb.top-54)+"px";tip.style.left=Math.min(width-175,Math.max(0,pos+14))+"px";
+  };
+  canvas.onpointerdown=event=>canvas.onpointermove(event);
+  canvas.onpointerleave=()=>{tip.style.display="none"};
+}
+document.querySelectorAll("[data-days]").forEach(btn=>btn.addEventListener("click",()=>{days=Number(btn.dataset.days);offset=0;load()}));
+byId("older").addEventListener("click",()=>{offset=Math.min(90,offset+days);load()});
+byId("newer").addEventListener("click",()=>{offset=Math.max(0,offset-days);load()});
+let resizeTimer;window.addEventListener("resize",()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{if(report)renderCharts(current())},150)});
+load();
+</script>
+</body>
+</html>

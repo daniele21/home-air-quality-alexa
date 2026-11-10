@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="dark"><meta name="theme-color" content="#0a111b">
+<title>Airwise · Intelligence inquinamento indoor</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",system-ui,sans-serif;color:#ecf7f5;background:#0a111b;--panel:#14232f;--line:#2c4450;--secondary:#9cabb9;--mint:#97e5c1;--purple:#c4b0ef;--amber:#f1cc85}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse 85% 420px at 60% -150px,#173d40,transparent 90%),#0a111b;color:#e8f4f4}button,select{font:inherit}button{cursor:pointer}button:focus-visible,a:focus-visible,select:focus-visible{outline:2px solid #b5f6d2;outline-offset:3px}
+a{color:inherit;text-decoration:none}.app{max-width:1240px;margin:auto;padding:27px 32px 60px}
+nav{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:35px}.brand{font-size:23px;font-weight:780;letter-spacing:-.045em}.brand span{color:var(--mint)}.back{font-size:12px;color:#aec6d2;padding:10px 14px;border:1px solid #39545a;border-radius:12px}.back:hover{background:#19343e}
+h1{font-size:clamp(32px,4.3vw,57px);letter-spacing:-.06em;line-height:1.05;margin:0 0 14px}h1 em{color:var(--mint);font-style:normal}.subtitle{color:#a5bac4;font-size:13px;line-height:1.7;max-width:780px;margin:0}.eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#a5e2c5;font-weight:800;margin-bottom:12px}
+.header{display:flex;justify-content:space-between;align-items:flex-end;gap:22px;flex-wrap:wrap;margin-bottom:28px}.ctrl{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.switch{display:flex;gap:3px;border:1px solid #314653;padding:4px;background:#122431;border-radius:12px}.choice{border:0;background:transparent;color:#aec0ca;padding:9px 12px;font-weight:700;font-size:12px;border-radius:8px}.choice.active{background:#d0f5df;color:#173628}.arrow{border:1px solid #39505b;background:#162935;color:#d4e4e8;border-radius:10px;width:34px;height:36px;font-size:20px}.arrow:disabled{opacity:.3}.period{font-size:12px;color:#b4ccd3;min-width:118px;text-align:center}
+.anchor-nav{display:flex;gap:8px;flex-wrap:wrap;margin:23px 0}.anchor-nav a{border:1px solid #2d424e;border-radius:10px;padding:10px 14px;font-size:12px;color:#c1d3d8;background:#13232f}.anchor-nav a:hover{border-color:var(--mint)}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:20px}.tile,.panel{background:linear-gradient(155deg,#162835,#101e2a);border:1px solid #2c4150;border-radius:18px;min-width:0}.tile{padding:19px 20px}.tile .k{color:#a5bbc7;font-size:12px;font-weight:650}.tile .v{font-size:clamp(25px,3.2vw,39px);font-weight:740;letter-spacing:-.045em;margin:14px 0 7px}.tile .s{color:#8da6b2;font-size:11px;line-height:1.6}.tile .v small{font-size:12px;color:#a1b9c1;font-weight:500}
+.grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(300px,1fr);gap:16px;margin-bottom:17px}.panel{padding:22px 23px}.panel h2{margin:0;font-size:19px;letter-spacing:-.035em}.desc{color:#a2b6c1;font-size:12px;line-height:1.7;margin:9px 0 0}.sec{font-size:10px;text-transform:uppercase;letter-spacing:.15em;color:#94b9b2;font-weight:800;margin:35px 0 13px}.chart-wrap{margin-top:22px;position:relative}canvas{width:100%;height:238px;display:block;touch-action:pan-y}.compact canvas{height:175px}.legend{font-size:11px;color:#9bb1ba;margin-top:14px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}.legend i{display:inline-block;width:14px;height:3px;margin-right:6px;background:var(--mint);vertical-align:middle}.legend i.ref{background:#e0bc7d}
+.tip{position:absolute;display:none;pointer-events:none;padding:8px 10px;background:#f2f8f7;color:#143037;border-radius:9px;font-size:11px;line-height:1.5;box-shadow:0 8px 20px #0005;z-index:3}
+.stat{display:flex;justify-content:space-between;gap:13px;align-items:baseline;padding:15px 0;border-bottom:1px solid #2c4250}.stat span{font-size:12px;color:#a4bec8}.stat strong{font-size:17px;letter-spacing:-.025em}
+.note{margin-top:17px;padding:14px;background:#18343b;border:1px solid #31535a;border-radius:13px;font-size:11px;line-height:1.7;color:#b7cfca}
+.episodes{display:flex;flex-direction:column;gap:9px;margin-top:19px;max-height:320px;overflow:auto}.event{padding:13px 15px;border:1px solid #38505a;background:#172935;border-radius:12px;display:flex;justify-content:space-between;gap:14px;align-items:center}.event strong{font-size:13px}.event small{color:#90abb6;font-size:11px;display:block;margin-top:5px}.event .val{font-size:19px;font-weight:730;color:#f5d69b;white-space:nowrap}.empty{color:#a8b9c4;font-size:12px;line-height:1.8;margin-top:20px}
+.selectline{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}select{background:#1b303c;border:1px solid #48626b;border-radius:9px;color:#e6f5f2;padding:9px 11px;font-size:12px}
+.heatmap{display:grid;grid-template-columns:repeat(24,minmax(0,1fr));gap:5px;margin-top:22px}.heatcell{height:40px;border-radius:5px;background:#213444;position:relative}.heatlabel{display:flex;justify-content:space-between;gap:12px;font-size:11px;color:#8ca5ad;margin-top:8px}
+.weekday{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin:20px 0}.wd{min-width:0;text-align:center}.wdbar{background:#223542;height:83px;display:flex;align-items:flex-end;border-radius:7px;overflow:hidden}.wdbar i{display:block;width:100%;background:linear-gradient(#b1f4ce,#488b83);border-radius:6px 6px 0 0}.wd label{display:block;font-size:10px;color:#91a6b2;margin-top:8px}.wd b{font-size:11px;font-weight:650;color:#d6e8e9}
+.relation{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:17px 0;border-bottom:1px solid #324655}.relation .left b{display:block;font-size:14px}.relation .left small{display:block;color:#a4b8c2;font-size:11px;margin-top:5px}.r{font-size:25px;letter-spacing:-.03em;font-weight:730;color:#a4e1c8}.r.no{color:#8297a6;font-size:15px}.disclaimer{color:#8299a6;font-size:11px;line-height:1.75;border-top:1px solid #263d49;margin-top:24px;padding-top:17px}.warning{display:none;margin:18px 0;background:#3b262d;border-radius:12px;padding:15px;font-size:12px;color:#ffd0d0}
+@media(max-width:870px){.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.grid{grid-template-columns:1fr}.panel{padding:19px}.heatcell{height:34px}.header{align-items:flex-start}}@media(max-width:550px){.app{padding:20px 15px 40px}.metrics{gap:8px}.tile{padding:16px}.tile .v{font-size:28px}.heatmap{gap:3px}.heatcell{height:25px}.ctrl{justify-content:flex-start}.period{min-width:95px}.panel h2{font-size:17px}.header{margin-bottom:14px}}@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* Airwise original mobile-first design pass: see DESIGN.md and local agent skills. */
+:root{--aq-background:#0b121b;--aq-surface:#142534;--aq-border:#334b58;--aq-text:#f2faf7;--aq-muted:#b6c7d0;--aq-indoor:#9ce8c2;--aq-outdoor:#f0c58e;--aq-note:#d6b3f2;--aq-focus:#b6f6d4;--aq-touch-target:44px}
+.aw-nav{max-width:1240px;margin:10px auto 0;padding:0 34px;display:flex;justify-content:flex-end;gap:9px}
+.aw-nav a{display:flex;align-items:center;justify-content:center;min-height:44px;padding:10px 15px;border:1px solid #37515a;border-radius:12px;color:#cbdde2;text-decoration:none;font-size:14px;font-weight:650;white-space:nowrap}
+.aw-nav a[aria-current="page"]{color:#112e26;background:#b7f1d1;border-color:#b7f1d1}
+.aw-nav a:focus-visible{outline:3px solid var(--aq-focus);outline-offset:3px}
+.step,.arrow{width:44px!important;height:44px!important;min-width:44px}
+.pill,.choice{min-height:44px!important;padding-inline:13px!important}
+.metric,.ghost,.action{min-height:44px}
+button,select,input{touch-action:manipulation}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--aq-focus);outline-offset:3px}
+.aw-data-details{margin-top:16px;border:1px solid #37515a;border-radius:12px;background:#162936;padding:12px 14px}
+.aw-data-details summary{cursor:pointer;color:#cce9dd;font-weight:650;font-size:14px;min-height:44px;display:flex;align-items:center}
+.aw-table-scroll{overflow-x:auto;overscroll-behavior-inline:contain}
+.aw-data-details table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+.aw-data-details th,.aw-data-details td{padding:9px;text-align:left;border-bottom:1px solid #37515a;white-space:nowrap}
+.aw-data-details th{color:#b6c7d0}
+.aw-nav~.shell,.aw-nav~.app{min-width:0}
+@media(max-width:760px){
+  .aw-nav{position:fixed;z-index:50;bottom:0;left:0;right:0;margin:0;padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));width:100%;max-width:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;background:#0d1c29f7;border-top:1px solid #38535e;box-shadow:0 -10px 34px #0004;backdrop-filter:blur(14px)}
+  .aw-nav a{white-space:normal;text-align:center;line-height:1.22;font-size:12px;padding:8px 3px;min-height:48px}
+  .shell,.app{padding-bottom:calc(106px + env(safe-area-inset-bottom,0px))!important}
+  .hero h1,.header h1,h1{font-size:clamp(28px,8vw,36px)!important;line-height:1.12}
+  .hero,.header{gap:14px!important}
+  .eyebrow{margin-bottom:7px!important}
+  .top,.header{margin-bottom:18px!important}
+  .panel-sub,.desc,.meta,.sub,.subtitle{font-size:14px;line-height:1.55}
+  .notice,.hint,.footnote,.disclaimer{font-size:12px}
+  .metrics{scrollbar-width:thin}
+  .aw-nav~.shell .top a[href="/pollution"],.aw-nav~.app .navlinks,.aw-nav~.app nav .back{display:none}
+  .twocol{grid-template-columns:1fr!important}
+  .form input,.form select,select{font-size:16px!important;min-height:44px!important}
+}
+@media(prefers-reduced-motion:reduce){.aw-nav *{animation:none!important;transition:none!important}}
+
+/* Keep dense matrix readable on mobile without scrolling the entire document. */
+.aw-heatmap-scroll{overflow-x:auto;max-width:100%;overscroll-behavior-inline:contain;scrollbar-width:thin;padding-bottom:8px}
+.aw-heatmap-scroll:focus-visible{outline:3px solid var(--aq-focus);outline-offset:2px}
+.heatmap{min-width:600px;grid-template-columns:repeat(24,minmax(20px,1fr))}
+.heatcell{min-width:20px}
+@media(max-width:760px){
+  .anchor-nav{overflow-x:auto;flex-wrap:nowrap;overscroll-behavior-inline:contain;padding-bottom:8px}
+  .anchor-nav a{white-space:nowrap;min-height:44px;display:flex;align-items:center}
+  .selectline select{width:100%}
+  .event{align-items:flex-start}
+  .heatlabel{font-size:12px;line-height:1.4}
+}
+
+/* Ensure input widgets and secondary actions remain touch-sized on tablet/desktop. */
+input,select,.ghost{min-height:44px}
+
+/* KPI proportions: a four-number summary is supporting context, not a hero.
+   Give daily charts and annotated episodes the visual weight. */
+.tile .v{font-variant-numeric:tabular-nums}
+@media(max-width:760px){
+ .header h1{font-size:28px!important;letter-spacing:-.045em;line-height:1.12}
+ .header .subtitle{font-size:12px;line-height:1.5}
+ .header{margin-bottom:8px!important}
+ .anchor-nav{margin:8px 0}
+ .sec{margin:12px 0 8px}
+ .sec.first-section{display:none}
+ .metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:8px}
+ .tile{padding:11px 12px;min-height:80px;border-radius:13px}
+ .tile .k{font-size:11px;line-height:1.3}
+ .tile .v{font-size:21px;letter-spacing:-.03em;line-height:1.05;margin:7px 0 4px}
+ .tile .s{font-size:11px;line-height:1.3}
+ .tile:nth-child(n+3){display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:44px;padding:8px 10px;background:transparent}
+ .tile:nth-child(n+3) .k{font-size:11px;line-height:1.25}
+ .tile:nth-child(n+3) .v{font-size:17px;line-height:1;margin:0;white-space:nowrap}
+ .tile:nth-child(n+3) .s{display:none}
+ .panel{padding:16px}
+ .chart-wrap{margin-top:8px}
+}
+
+.tile .v small{font-size:12px;font-weight:550;letter-spacing:0;color:#aebdc8;margin-left:5px}
+@media(max-width:760px){
+  .app>nav:not(.aw-nav){margin-bottom:14px}
+  .header h1{font-size:26px!important}
+  .header .subtitle{font-size:12px!important;margin:5px 0 0}
+  .header .eyebrow{font-size:10px;margin-bottom:6px}
+  .header{gap:8px!important}
+  .header .ctrl{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:5px 8px;width:100%}
+  .header .ctrl .switch{grid-column:1 / -1;grid-row:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));padding:3px}
+  .header .ctrl .choice{min-height:44px}
+  .header .ctrl #older{grid-column:1;grid-row:2}
+  .header .ctrl .period{grid-column:2;grid-row:2;min-width:0;align-self:center}
+  .header .ctrl #newer{grid-column:3;grid-row:2}
+  .anchor-nav{display:none}
+  .metrics{margin-bottom:8px;gap:7px}
+  .tile{min-height:68px;padding:9px 11px}
+  .tile .v{font-size:20px;margin:5px 0 3px}
+  .tile .s{font-size:10px;line-height:1.35}
+  .tile:nth-child(n+3){min-height:40px}
+  .panel{padding:15px}
+  .panel h2{font-size:17px}
+  .panel>.desc{font-size:12px;line-height:1.4;margin:5px 0 0}
+  .chart-wrap{margin-top:9px}
+}
+</style></head><body><nav class="aw-nav" aria-label="Navigazione principale Airwise">
+<a href="/">Panoramica</a>
+<a href="/pollution" aria-current="page">Inquinamento</a>
+<a href="/context">Diario e outdoor</a>
+</nav><main class="app">
+<nav><div class="brand">Airwise<span>.</span> <span style="font-size:11px;font-weight:540;letter-spacing:0;color:#96aab2">/ Intelligence</span></div><div style="display:flex;gap:9px;flex-wrap:wrap"><a class="back" href="/context">Diario e outdoor ↗</a><a class="back" href="/">← Panoramica</a></div></nav>
+<section class="header"><div><div class="eyebrow">Inquinamento indoor · approfondimenti</div><h1>Analisi <em>inquinamento.</em></h1><p class="subtitle">Picchi, ritmi delle 24 ore e relazioni fra sensori.</p></div>
+<div class="ctrl"><div class="switch"><button class="choice" data-days="7">7 giorni</button><button class="choice" data-days="14">14 giorni</button><button class="choice active" data-days="30">30 giorni</button></div><button class="arrow" id="older" aria-label="Periodo precedente">‹</button><span class="period" id="dateRange">—</span><button class="arrow" id="newer" aria-label="Periodo successivo" disabled>›</button></div></section>
+<div class="anchor-nav"><a href="#episodi">01 · Episodi PM2.5</a><a href="#ritmi">02 · Ritmi della casa</a><a href="#relazioni">03 · Relazioni fra sensori</a></div><div id="error" class="warning" role="alert"></div>
+<div class="metrics"><div class="tile"><div class="k">PM2.5 · Mediana</div><div class="v"><span id="median">—</span><small>µg/m³</small></div><div class="s">Valore centrale del periodo</div></div>
+<div class="tile"><div class="k">90° percentile</div><div class="v"><span id="p90">—</span><small>µg/m³</small></div><div class="s">Soglia statistica relativa</div></div>
+<div class="tile"><div class="k">Episodi ≥2 ore</div><div class="v" id="episodeCount">—</div><div class="s">Almeno 2 ore sopra il P90 del periodo</div></div>
+<div class="tile"><div class="k">Copertura PM2.5</div><div class="v" id="coverage">—</div><div class="s" id="coverageHours">Ore osservate su ore attese</div></div></div>
+
+<div class="sec first-section">01 / Particolato e persistenza</div>
+<div class="grid" id="episodi"><section class="panel"><h2>PM2.5 · Medie giornaliere</h2><p class="desc">Valori orari Alexa aggregati per giorno UTC · riferimento OMS 24h solo contestuale.</p><div class="chart-wrap"><canvas id="daily" aria-label="PM2.5 medio giornaliero e riferimento OMS"></canvas><div class="tip" id="dailyTip"></div></div><div class="legend"><span><i></i>Media giornaliera</span><span><i class="ref"></i>OMS 24h · riferimento contestuale</span></div><details class="aw-data-details"><summary>Come interpretare il riferimento OMS</summary><p class="desc">Le medie usano le ore osservate di ciascun giorno UTC. La linea tratteggiata indica 15 µg/m³ come riferimento OMS per la media di 24 ore dell'aria ambientale; non rappresenta un allarme indoor, né certifica la sicurezza delle misure Alexa. I giorni incompleti non sono classificati rispetto al riferimento.</p></details><details class="aw-data-details"><summary>Medie PM2.5 in tabella</summary><div class="aw-table-scroll"><table><thead><tr><th scope="col">Giorno UTC</th><th scope="col">Media µg/m³</th><th scope="col">Ore</th><th scope="col">Confronto 24h</th></tr></thead><tbody id="pm25DailyTable"></tbody></table></div></details></section>
+<section class="panel"><h2>Giornate e concentrazioni</h2><p class="desc">Il confronto con il riferimento di 24 ore richiede tutte le 24 letture orarie UTC. I giorni incompleti restano visibili, ma non vengono classificati.</p>
+<div class="stat"><span>Giorni confrontabili</span><strong id="complete">—</strong></div>
+<div class="stat"><span>Giorni sopra il riferimento di 24h</span><strong id="whoDays">—</strong></div>
+<div class="stat"><span>Picco orario più alto</span><strong id="maxHour">—</strong></div>
+<div class="note">Il riferimento OMS non deve essere interpretato come una soglia istantanea né una certificazione delle letture del monitor. Un valore sotto 15 non dimostra che l’aria sia priva di rischi.</div></section></div>
+<div class="grid"><section class="panel"><h2>Episodi sopra il normale del periodo</h2><p class="desc">Raggruppiamo ore consecutive sopra il 90° percentile storico. Il criterio è relativo: serve a individuare eventi da esplorare, non a generare allarmi sanitari.</p><div class="episodes" id="events"><div class="empty">Analisi in caricamento...</div></div></section><section class="panel"><h2>Come leggere i picchi</h2><p class="desc">Un evento prolungato può pesare più di un picco molto breve. La classifica ordina gli episodi secondo l'eccesso cumulativo rispetto al P90.</p><div class="note">Cucina, candele, pulizie e infiltrazione di aria esterna sono possibili sorgenti di particolato indoor. I soli sensori non identificano la causa: per verificarla sono utili annotazioni contestuali delle attività.</div></section></div>
+
+<div class="sec" id="ritmi">02 / Quando succede</div>
+<div class="grid"><section class="panel"><div class="selectline"><div><h2>Profilo delle 24 ore</h2><p class="desc">Media per ora locale italiana (Europe/Rome), considerando il cambio fra ora legale e solare.</p></div><select id="channel" aria-label="Indicatore dei ritmi"><option value="PM25">PM2.5</option><option value="VOC">VOC</option><option value="CO">CO</option><option value="Humidity">Umidità</option><option value="Air Quality">Indice Alexa</option></select></div><div class="chart-wrap"><canvas id="diurnal" aria-label="Medie per ora del giorno"></canvas><div class="tip" id="diurnalTip"></div></div><div class="legend">I valori delle diverse grandezze non vengono normalizzati o sommati.</div><details class="aw-data-details"><summary>Valori delle 24 ore in tabella</summary><div class="aw-table-scroll"><table><thead><tr><th scope="col">Ora locale</th><th scope="col">Media</th><th scope="col">Campioni</th></tr></thead><tbody id="diurnalTable"></tbody></table></div></details></section>
+<section class="panel"><h2>Giorni della settimana</h2><p class="desc">Media per giorno locale, senza attribuire cause alle differenze.</p><div class="weekday" id="weekdays"></div><div class="note" id="sampleInfo">Ogni media va letta insieme al numero di osservazioni disponibili.</div></section></div>
+<section class="panel"><h2>Heatmap: giorni × ore</h2><p class="desc">Ogni cella mostra la media del sensore selezionato per quell’ora locale nel giorno della settimana. Il colore riflette solo il minimo e il massimo osservati nel periodo, non livelli sanitari.</p><div class="aw-heatmap-scroll" tabindex="0" role="region" aria-label="Scorri lateralmente la heatmap delle 24 ore"><div class="heatmap" id="heatmap" role="img" aria-label="Pattern per ora e giorno della settimana"></div></div><div class="heatlabel"><span>Lunedì · 00:00</span><span>Ogni riga = 1 giorno, 24 colonne = ore locali</span><span>Domenica · 23:00</span></div><details class="aw-data-details"><summary>Heatmap in tabella: 7 giorni × 24 ore</summary><div class="aw-table-scroll" role="region" tabindex="0" aria-label="Valori medi e campioni della heatmap"><table><caption>Medie per giorno e ora locale; ogni cella contiene media e ore osservate</caption><thead id="heatmapTableHead"></thead><tbody id="heatmapTableBody"></tbody></table></div></details></section>
+
+<div class="sec" id="relazioni">03 / Come cambiano insieme</div>
+<div class="grid"><section class="panel"><h2>Associazioni con PM2.5</h2><p class="desc">Coefficiente di Pearson sulle stesse ore UTC registrate da entrambi i sensori. Disponibile con almeno 48 coppie e variazione sufficiente. Non misura causalità.</p><div id="relations"></div></section>
+<section class="panel"><h2>Interpretare senza forzature</h2><p class="desc">Una correlazione può dipendere da cicli giornalieri, stagionalità, variabili non osservate o variazioni condivise. Serve a formulare ipotesi, non a dedurre che un inquinante provochi l'altro.</p><div class="note">VOC è un indice del sensore Alexa, non la concentrazione di un composto specifico. L'indice complessivo Alexa è un punteggio derivato e quindi non viene trattato come misurazione indipendente nelle correlazioni.</div><div class="note">Il sensore CO del monitor non sostituisce un rilevatore di monossido di carbonio certificato, né va usato come unico sistema di sicurezza.</div></section></div>
+<footer class="disclaimer">Airwise · Dati Alexa aggregati su base oraria · Analisi eseguite esclusivamente sul Mac, in sola lettura · Riferimento OMS 2021 PM2.5 media 24h aria ambientale. Fonti: WHO 2021, US EPA Indoor Air Quality, documentazione Amazon. Il monitor non certifica la qualità dell’aria né l'esposizione personale.</footer>
+</main><script>
+"use strict";
+const qs=id=>document.getElementById(id), fmt=(v,n=1)=>v===null||v===undefined||!Number.isFinite(v)?"—":new Intl.NumberFormat("it-IT",{maximumFractionDigits:n}).format(v);
+const units={PM25:"µg/m³",VOC:"indice",CO:"ppm",Humidity:"%", "Air Quality":"indice"};
+let days=30,offset=0,sensor="PM25",data=null;
+const dateDisplay=x=>new Intl.DateTimeFormat("it-IT",{day:"numeric",month:"short",timeZone:"UTC"}).format(new Date(x+"T00:00:00Z"));
+const timeDisplay=x=>new Intl.DateTimeFormat("it-IT",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit",timeZone:"Europe/Rome"}).format(new Date(x));
+async function load(){
+ qs("error").style.display="none";
+ document.querySelectorAll("[data-days]").forEach(b=>{const active=Number(b.dataset.days)===days;b.classList.toggle("active",active);b.setAttribute("aria-pressed",String(active));});
+ qs("newer").disabled=offset===0;qs("older").disabled=offset>=90;
+ try{let r=await fetch("/api/pollution?days="+days+"&offset="+offset,{cache:"no-store"});let j=await r.json();
+ if(!r.ok)throw new Error(j.error||"Impossibile leggere il database");data=j;render();}
+ catch(err){qs("error").textContent=err.message;qs("error").style.display="block";}
+}
+const datePrev=x=>{const d=new Date(x+"T00:00:00Z");d.setUTCDate(d.getUTCDate()-1);return d.toISOString().slice(0,10);};
+function render(){
+ const p=data.pm25;qs("dateRange").textContent=dateDisplay(data.start_date_utc)+" – "+dateDisplay(datePrev(data.end_date_utc_exclusive));
+ qs("median").textContent=fmt(p.median);qs("p90").textContent=fmt(p.p90);
+ qs("episodeCount").textContent=p.episodes.length;qs("coverage").textContent=fmt(p.coverage_pct)+"%";qs("coverageHours").textContent=p.hours_available+" su "+p.hours_expected+" ore";
+ qs("complete").textContent=p.complete_days+" / "+data.days;qs("whoDays").textContent=p.days_above_who_reference+" / "+p.complete_days;
+ qs("maxHour").textContent=fmt(p.maximum)+" µg/m³";
+ const dailyTable=qs("pm25DailyTable");dailyTable.replaceChildren();
+ for(const day of p.daily){
+   const tr=document.createElement("tr");
+   const values=[day.date_utc,fmt(day.mean,2),String(day.hours)+"/24",
+     day.above_who_ambient_reference===null?"Non confrontabile":day.above_who_ambient_reference?"Sopra riferimento":"Non sopra riferimento"];
+   for(const value of values){const td=document.createElement("td");td.textContent=value;tr.append(td)}
+   dailyTable.append(tr);
+ }
+
+ qs("events").replaceChildren();
+ if(!p.episodes.length){let e=document.createElement("div");e.className="empty";e.textContent=p.hours_available<48?"Non ci sono abbastanza ore per stimare episodi rispetto al P90.":"Non emergono episodi consecutivi di almeno due ore sopra il P90.";qs("events").append(e);}
+ for(const ev of p.episodes){let row=document.createElement("div");row.className="event";
+ let left=document.createElement("div"),head=document.createElement("strong"),sub=document.createElement("small"),right=document.createElement("div");
+ head.textContent=timeDisplay(ev.start_utc)+" · "+ev.duration_hours+"h";
+ sub.textContent="Media "+fmt(ev.mean)+" µg/m³ · eccesso cumulato "+fmt(ev.excess_above_relative_p90);
+ right.className="val";right.textContent=fmt(ev.peak)+" µg/m³";
+ left.append(head,sub);row.append(left,right);qs("events").append(row);}
+ drawLine(qs("daily"),qs("dailyTip"),p.daily.map(x=>({v:x.mean,label:x.date_utc,complete:x.complete_enough_for_24h_comparison})),15,"µg/m³",false);
+ renderPatterns();
+}
+function renderPatterns(){
+ const pts=data.diurnal[sensor]||[];const wd=data.weekday[sensor]||[];const unit=units[sensor];
+ const table=qs("diurnalTable");table.replaceChildren();
+ for(const point of pts){const tr=document.createElement("tr");
+   for(const value of [String(point.hour_local).padStart(2,"0")+":00",fmt(point.mean,2)+" "+unit,String(point.sample_count)]){
+     const td=document.createElement("td");td.textContent=value;tr.append(td)}
+   table.append(tr);
+ }
+
+ drawLine(qs("diurnal"),qs("diurnalTip"),pts.map(x=>({v:x.mean,label:String(x.hour_local).padStart(2,"0")+":00 · "+x.sample_count+" campioni"})),null,unit,true);
+ qs("weekdays").replaceChildren();const wmax=Math.max(1,...wd.map(x=>x.mean||0));const wdnames=["Lun","Mar","Mer","Gio","Ven","Sab","Dom"];
+ wd.forEach(x=>{const cell=document.createElement("div");cell.className="wd";const bar=document.createElement("div");bar.className="wdbar";
+ const fill=document.createElement("i");fill.style.height=x.mean===null?"0%":Math.round(Math.max(3,x.mean/wmax*100))+"%";
+ const label=document.createElement("label");label.textContent=wdnames[x.weekday_local];
+ const val=document.createElement("b");val.textContent=fmt(x.mean);
+ cell.title=x.sample_count+" ore osservate";bar.append(fill);cell.append(bar,label,val);qs("weekdays").append(cell);});
+ qs("sampleInfo").textContent="Ogni media dipende dalla copertura. "+(data.available_channels.find(x=>x.sensor===sensor)?.hours||0)+" ore valide per "+(sensor==="PM25"?"PM2.5":sensor)+".";
+ const groups=data.weekday_hour_heatmap[sensor]||[];
+ const all=groups.flat().map(p=>p.mean).filter(v=>v!==null&&Number.isFinite(v));
+ const low=all.length?Math.min(...all):0, high=all.length?Math.max(...all):1;
+ qs("heatmap").replaceChildren();
+ const heatHead=qs("heatmapTableHead");heatHead.replaceChildren();
+ const hrow=document.createElement("tr");
+ const corner=document.createElement("th");corner.scope="col";corner.textContent="Giorno";hrow.append(corner);
+ for(let hour=0;hour<24;hour++){const th=document.createElement("th");th.scope="col";th.textContent=String(hour).padStart(2,"0")+":00";hrow.append(th)}
+ heatHead.append(hrow);
+ const heatBody=qs("heatmapTableBody");heatBody.replaceChildren();
+ const weekdayNames=["Lun","Mar","Mer","Gio","Ven","Sab","Dom"];
+ groups.forEach((line,weekday)=>{
+   const row=document.createElement("tr"),heading=document.createElement("th");
+   heading.scope="row";heading.textContent=weekdayNames[weekday]||String(weekday);
+   row.append(heading);
+   for(const cell of line){const td=document.createElement("td");td.textContent=fmt(cell.mean,2)+" "+unit+" · "+cell.sample_count+" ore";row.append(td)}
+   heatBody.append(row);
+ });
+ groups.forEach((line,weekday)=>{
+   line.forEach((cell,hour)=>{
+     const x=document.createElement("div");x.className="heatcell";
+     if(cell.mean!==null){
+       const fraction=high===low?0.55:(cell.mean-low)/(high-low);
+       const alpha=(0.12+fraction*0.84).toFixed(3);
+       x.style.background="rgba(130,230,176,"+alpha+")";
+     }
+     x.title=["Lun","Mar","Mer","Gio","Ven","Sab","Dom"][weekday]+" "+String(hour).padStart(2,"0")+":00: "+fmt(cell.mean)+" "+unit+" · "+cell.sample_count+" ore";
+     x.setAttribute("aria-label",x.title);
+     qs("heatmap").append(x);
+   });
+ });
+ const rel=qs("relations");rel.replaceChildren();
+ data.associations.forEach(a=>{let node=document.createElement("div");node.className="relation";
+ const left=document.createElement("div");left.className="left";const title=document.createElement("b");title.textContent="PM2.5 ↔ "+a.label;const sub=document.createElement("small");sub.textContent=a.paired_hours+" ore abbinate · confronto contemporaneo";left.append(title,sub);
+ const value=document.createElement("div");value.className="r"+(a.r===null?" no":"");value.textContent=a.r===null?"Dati insufficienti":(a.r>0?"+":"")+fmt(a.r,3);node.append(left,value);rel.append(node);});
+}
+function drawLine(canvas,tip,pts,ref,unit,diurnal){
+ const w=Math.max(260,canvas.getBoundingClientRect().width),h=diurnal?238:238,dpr=Math.min(2,window.devicePixelRatio||1);canvas.width=w*dpr;canvas.height=h*dpr;
+ const c=canvas.getContext("2d");c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,w,h);
+ const L=37,R=13,T=16,B=29,ww=w-L-R,hh=h-T-B;
+ let vals=pts.map(x=>x.v).filter(x=>x!==null&&Number.isFinite(x));if(ref!==null)vals.push(ref);
+ if(!vals.length){c.fillStyle="#a2b5bf";c.font="12px system-ui";c.fillText("Nessun dato nel periodo",L+12,100);return;}
+ const max=Math.max(1,Math.max(...vals)*1.14),min=0,x=i=>L+ww*i/Math.max(1,pts.length-1),y=v=>T+hh-(v-min)/max*hh;
+ c.font="11px system-ui";c.textAlign="right";c.textBaseline="middle";for(let i=0;i<4;i++){const value=max*(1-i/3),yy=y(value);
+ c.strokeStyle="#294350";c.lineWidth=1;c.beginPath();c.moveTo(L,yy);c.lineTo(L+ww,yy);c.stroke();
+ c.fillStyle="#93adbb";c.fillText(fmt(value,1),L-5,yy);}
+ if(ref!==null){c.setLineDash([5,5]);c.strokeStyle="#e4bf77";c.lineWidth=1.5;c.beginPath();c.moveTo(L,y(ref));c.lineTo(L+ww,y(ref));c.stroke();c.setLineDash([]);}
+ c.strokeStyle="#96e5c4";c.lineWidth=2.4;c.lineCap="round";let open=false;c.beginPath();
+ pts.forEach((p,i)=>{if(p.v===null){open=false;return;}if(open)c.lineTo(x(i),y(p.v));else{c.moveTo(x(i),y(p.v));open=true;}});c.stroke();
+ pts.forEach((p,i)=>{if(p.v===null)return;c.beginPath();c.arc(x(i),y(p.v),2.8,0,Math.PI*2);c.fillStyle=p.complete===false?"#607784":"#a9f4cf";c.fill();});
+ c.fillStyle="#8aa6b3";c.font="10px system-ui";c.textAlign="center";
+ [0,Math.floor((pts.length-1)/2),pts.length-1].forEach(i=>{let label=diurnal?pts[i].label.split(" ")[0]:dateDisplay(pts[i].label);c.fillText(label,x(i),h-11);});
+ canvas.onpointermove=e=>{const r=canvas.getBoundingClientRect(),p=e.clientX-r.left,i=Math.max(0,Math.min(pts.length-1,Math.round((p-L)/ww*(pts.length-1))));
+ tip.style.display="block";tip.style.left=Math.max(3,Math.min(w-165,p+9))+"px";tip.style.top=Math.max(2,e.clientY-r.top-46)+"px";
+ tip.textContent=pts[i].label+" · "+fmt(pts[i].v)+" "+unit+(pts[i].complete===false?" · dati parziali":"");};
+ canvas.onpointerdown=e=>canvas.onpointermove(e);
+ canvas.onpointerleave=()=>tip.style.display="none";
+}
+document.querySelectorAll("[data-days]").forEach(el=>el.addEventListener("click",()=>{days=Number(el.dataset.days);offset=0;load()}));
+qs("older").addEventListener("click",()=>{offset=Math.min(90,offset+days);load()});
+qs("newer").addEventListener("click",()=>{offset=Math.max(0,offset-days);load()});
+qs("channel").addEventListener("change",()=>{sensor=qs("channel").value;if(data)renderPatterns()});
+let resize;window.addEventListener("resize",()=>{clearTimeout(resize);resize=setTimeout(()=>{if(data)render()},130)});
+load();
+</script></body></html>
